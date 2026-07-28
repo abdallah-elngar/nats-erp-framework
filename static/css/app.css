@@ -1,0 +1,404 @@
+/* ============================================
+   NATS Framework - Main Styles (Local)
+   ============================================ */
+
+/* ============================================
+   Reset & Base
+   ============================================ */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f7fafc; color: #1a202c; }
+
+/* ============================================
+   Sidebar
+   ============================================ */
+.sidebar {
+    width: 240px;
+    height: 100vh;
+    background: #1a202c;
+    color: white;
+    position: fixed;
+    top: 0;
+    left: 0;
+    padding: 20px;
+    overflow-y: auto;
+    z-index: 50;
+}
+.sidebar .logo {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 30px;
+    color: #a0aec0;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #2d3748;
+}
+.sidebar .logo span { color: #6366f1; }
+.sidebar a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 15px;
+    color: #a0aec0;
+    text-decoration: none;
+    border-radius: 8px;
+    margin-bottom: 4px;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+.sidebar a:hover { background: #2d3748; color: white; }
+.sidebar a.active { background: #4f46e5; color: white; }
+.sidebar .divider { height: 1px; background: #2d3748; margin: 15px 0; }
+
+/* ============================================
+   Main Content
+   ============================================ */
+.main {
+    margin-left: 240px;
+    padding: 24px;
+    min-height: 100vh;
+    background: #f7fafc;
+}
+
+/* ============================================
+   Header
+   ============================================ */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.header h1 {
+    color: #1a202c;
+    font-size: 24px;
+    font-weight: 600;
+}
+
+/* ============================================
+   Mode Toggle
+   ============================================ */
+.mode-toggle {
+    display: flex;
+    gap: 8px;
+    background: #e2e8f0;
+    padding: 4px;
+    border-radius: 8px;
+}
+.mode-toggle button {
+    padding: 6px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+.mode-toggle button.active {
+    background: #4f46e5;
+    color: white;
+}
+.mode-toggle button:not(.active) {
+    background: transparent;
+    color: #4a5568;
+}
+.mode-toggle button:not(.active):hover {
+    background: #cbd5e0;
+}
+
+/* ============================================
+   Stats
+   ============================================ */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.stat-card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.stat-card .left .label {
+    font-size: 12px;
+    color: #718096;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+.stat-card .left .value {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1a202c;
+    margin-top: 4px;
+}
+.stat-card .right { font-size: 32px; opacity: 0.4; }
+
+/* ============================================
+   Cards
+   ============================================ */
+.card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.card-header h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a202c;
+}
+
+/* ============================================
+   Buttons
+   ============================================ */
+.btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+    font-size: 13px;
+}
+.btn-primary { background: #4f46e5; color: white; }
+.btn-primary:hover { background: #4338ca; }
+.btn-success { background: #48bb78; color: white; }
+.btn-success:hover { background: #38a169; }
+.btn-danger { background: #fc8181; color: white; }
+.btn-danger:hover { background: #f56565; }
+.btn-warning { background: #ecc94b; color: #744210; }
+.btn-warning:hover { background: #d69e2e; }
+.btn-secondary { background: #e2e8f0; color: #4a5568; }
+.btn-secondary:hover { background: #cbd5e0; }
+.btn-sm { padding: 4px 12px; font-size: 12px; }
+
+/* ============================================
+   Tables
+   ============================================ */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+th {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 2px solid #e2e8f0;
+    color: #4a5568;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #e2e8f0;
+}
+tr:hover { background: #f7fafc; }
+
+/* ============================================
+   Badges
+   ============================================ */
+.badge {
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+}
+.badge-success { background: #c6f6d5; color: #22543d; }
+.badge-warning { background: #fefcbf; color: #744210; }
+.badge-danger { background: #fed7d7; color: #742a2a; }
+.badge-primary { background: #bee3f8; color: #234e52; }
+
+/* ============================================
+   Forms
+   ============================================ */
+.form-group { margin-bottom: 12px; }
+.form-group label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 4px;
+    font-size: 14px;
+    color: #4a5568;
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 14px;
+}
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+}
+.form-group .hint {
+    font-size: 12px;
+    color: #718096;
+    margin-top: 4px;
+}
+.field-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 8px;
+    background: #f7fafc;
+    border-radius: 6px;
+    margin-bottom: 6px;
+}
+.field-row input {
+    flex: 1;
+    padding: 6px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    font-size: 13px;
+}
+.field-row select {
+    padding: 6px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    font-size: 13px;
+}
+.field-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+/* ============================================
+   Modals
+   ============================================ */
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+.modal.active { display: flex; }
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 700px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+.modal-content .close-btn {
+    float: right;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #a0aec0;
+}
+.modal-content .close-btn:hover { color: #4a5568; }
+.modal-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 16px;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 16px;
+}
+
+/* ============================================
+   Toast
+   ============================================ */
+.toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    color: white;
+    z-index: 2000;
+    animation: slideIn 0.3s ease;
+}
+.toast-success { background: #48bb78; }
+.toast-error { background: #fc8181; }
+.toast-info { background: #63b3ed; }
+.toast-warning { background: #ecc94b; color: #744210; }
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+/* ============================================
+   Utilities
+   ============================================ */
+.developer-only { display: none; }
+.developer-mode .developer-only { display: block; }
+.developer-mode .developer-only-inline { display: inline-block; }
+.production-mode .developer-only { display: none; }
+.production-mode .developer-only-inline { display: none; }
+[x-cloak] { display: none !important; }
+.empty-state {
+    text-align: center;
+    padding: 40px;
+    color: #a0aec0;
+}
+.empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+.migration-banner {
+    background: #fefcbf;
+    border: 1px solid #ecc94b;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-top: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.migration-banner .icon { font-size: 20px; }
+.migration-banner .message { color: #744210; font-weight: 500; }
+.text-gray-500 { color: #a0aec0; }
+.text-sm { font-size: 14px; }
+.flex { display: flex; }
+.flex-1 { flex: 1; }
+.gap-2 { gap: 8px; }
+.gap-3 { gap: 12px; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.mt-4 { margin-top: 16px; }
+.mb-4 { margin-bottom: 16px; }
+.p-2 { padding: 8px; }
+.w-full { width: 100%; }
+.overflow-x-auto { overflow-x: auto; }
+
+/* ============================================
+   Responsive
+   ============================================ */
+@media (max-width: 1024px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 768px) {
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+    }
+    .main { margin-left: 0; }
+    .stats-grid { grid-template-columns: 1fr; }
+    .header { flex-direction: column; align-items: flex-start; }
+    .field-form-grid { grid-template-columns: 1fr; }
+}

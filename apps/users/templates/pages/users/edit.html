@@ -1,0 +1,54 @@
+{{define "content"}}
+<div class="p-6">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Edit User</h2>
+        <button class="text-gray-500 hover:text-gray-700" @click="showModal = false">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    
+    <form hx-put="/api/users/{{.User.ID}}" hx-target="#modal-content" hx-swap="innerHTML" data-validate>
+        <div class="form-group">
+            <label class="form-label" for="email">Email</label>
+            <input type="email" class="form-control" id="email" name="email" value="{{.User.Email}}" required>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="full_name">Full Name</label>
+            <input type="text" class="form-control" id="full_name" name="full_name" value="{{.User.FullName}}">
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="role">Role</label>
+            <select class="form-control" id="role" name="role">
+                <option value="">Select a role</option>
+                {{range .Roles}}
+                <option value="{{.Name}}" {{if eq .Name $.User.Role}}selected{{end}}>{{.DisplayName}}</option>
+                {{end}}
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="status">Status</label>
+            <select class="form-control" id="status" name="status">
+                <option value="active" {{if eq .User.Status "active"}}selected{{end}}>Active</option>
+                <option value="inactive" {{if eq .User.Status "inactive"}}selected{{end}}>Inactive</option>
+                <option value="suspended" {{if eq .User.Status "suspended"}}selected{{end}}>Suspended</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label" for="password">New Password</label>
+            <input type="password" class="form-control" id="password" name="password" placeholder="Leave blank to keep current">
+            <small class="text-gray-500 text-sm">Only fill if you want to change the password</small>
+        </div>
+        
+        <div class="flex justify-end gap-2 mt-4">
+            <button type="button" class="btn btn-secondary" @click="showModal = false">Cancel</button>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save mr-2"></i>Update User
+            </button>
+        </div>
+    </form>
+</div>
+{{end}}

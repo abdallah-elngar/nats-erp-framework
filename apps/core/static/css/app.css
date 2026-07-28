@@ -1,0 +1,38 @@
+/* ============================================
+   NATS Framework - Main Styles
+   ============================================ */
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+
+/* Dark mode scrollbar */
+.dark ::-webkit-scrollbar-track { background: #1a1a2e; }
+.dark ::-webkit-scrollbar-thumb { background: #2d2d44; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #3d3d5c; }
+
+/* HTMX indicators */
+.htmx-indicator { opacity: 0; transition: opacity 500ms ease-in; }
+.htmx-request .htmx-indicator { opacity: 1; }
+.htmx-request.htmx-indicator { opacity: 1; }
+
+/* Card hover effects */
+.card { transition: box-shadow 0.2s ease-in-out; }
+.card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+/* Button hover effects */
+.btn { transition: all 0.2s ease-in-out; }
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+
+/* Status dots */
+.status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+.status-dot.green { background: #48bb78; }
+.status-dot.red { background: #fc8181; }
+.status-dot.yellow { background: #ecc94b; }
+
+/* Toast animations */
+.toast { animation: slideIn 0.3s ease; }
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }

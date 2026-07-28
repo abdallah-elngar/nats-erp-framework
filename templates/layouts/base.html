@@ -1,0 +1,22 @@
+{{define "base"}}
+<!DOCTYPE html>
+<html lang="{{.Locale}}" x-data="{ theme: localStorage.getItem('theme') || 'light' }" :class="theme">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} | NATS ERP</title>
+    
+    <link rel="stylesheet" href="/static/css/tailwind/tailwind.min.css">
+    <link rel="stylesheet" href="/static/fonts/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/app.css">
+    <link rel="stylesheet" href="/static/css/themes/{{.Theme}}.css">
+    
+    <script src="/static/js/htmx/htmx.min.js"></script>
+    <script src="/static/js/alpine/alpine.min.js"></script>
+    <script src="/static/js/app.js"></script>
+</head>
+<body>
+    {{template "content" .}}
+</body>
+</html>
+{{end}}

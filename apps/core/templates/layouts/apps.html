@@ -1,0 +1,95 @@
+{{define "content"}}
+<div class="card">
+    <div class="card-header">
+        <h2>📦 Applications</h2>
+        <div class="flex gap-2 flex-wrap">
+            <button class="btn btn-primary developer-only" @click="openCreateApp()">➕ Create App</button>
+            <button class="btn btn-success developer-only" @click="openLinkApp()">🔗 Link Apps</button>
+            <button class="btn btn-secondary" @click="loadApps()">🔄 Refresh</button>
+        </div>
+    </div>
+    
+    <div x-show="apps.length === 0" class="empty-state">
+        <div class="icon">📦</div>
+        <p>No applications found</p>
+        <p style="font-size: 13px; margin-top: 4px;" class="developer-only">Click "Create App" to get started</p>
+    </div>
+    
+    <table x-show="apps.length > 0">
+        <thead>
+            <tr>
+                <th>App Name</th>
+                <th>Models</th>
+                <th>Status</th>
+                <th class="developer-only">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <template x-for="app in apps" :key="app.name">
+                <tr>
+                    <td class="font-medium" x-text="app.name"></td>
+                    <td x-text="app.models"></td>
+                    <td>
+                        <span class="badge" :class="app.status === 'active' ? 'badge-success' : 'badge-warning'" x-text="app.status"></span>
+                    </td>
+                    <td class="developer-only">
+                        <div class="flex gap-1 flex-wrap">
+                            <button class="btn btn-primary btn-sm" @click="viewApp(app.name)">📊</button>
+                            <button class="btn btn-warning btn-sm" @click="openEditApp(app.name)">✏️</button>
+                            <button class="btn btn-success btn-sm" @click="openLinkApp(app.name)">🔗</button>
+                            <button class="btn btn-danger btn-sm" @click="deleteApp(app.name)">🗑️</button>
+                        </div>
+                    </td>
+                </tr>
+            </template>
+        </tbody>
+    </table>
+</div>
+
+<!-- Model Details -->
+<div class="card" x-show="selectedApp">
+    <div class="card-header">
+        <h2 x-text="'📊 Model Details: ' + selectedApp"></h2>
+        <button class="btn btn-primary btn-sm developer-only" @click="openAddField()">➕ Add Field</button>
+    </div>
+    
+    {{template "migration_banner" .}}
+    
+    <div x-show="selectedFields.length === 0" class="empty-state">
+        <div class="icon">📊</div>
+        <p>No models found for this application</p>
+    </div>
+    <div x-show="selectedFields.length > 0">
+        <template x-for="model in selectedFields" :key="model.model">
+            <div style="margin-bottom: 16px;">
+                <h3 style="font-weight: 600; color: #2d3748; margin-bottom: 8px;" x-text="'📄 ' + model.model"></h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Field Name</th>
+                            <th>Type</th>
+                            <th>Required</th>
+                            <th>Unique</th>
+                            <th class="developer-only">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template x-for="field in model.fields" :key="field.name">
+                            <tr>
+                                <td x-text="field.name"></td>
+                                <td><span class="badge badge-primary" x-text="field.type"></span></td>
+                                <td x-text="field.required ? '✅' : '❌'"></td>
+                                <td x-text="field.unique ? '✅' : '❌'"></td>
+                                <td class="developer-only">
+                                    <button class="btn btn-warning btn-sm" @click="editField(model.model, field.name)">✏️</button>
+                                    <button class="btn btn-danger btn-sm" @click="deleteField(model.model, field.name)">🗑️</button>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </template>
+    </div>
+</div>
+{{end}}

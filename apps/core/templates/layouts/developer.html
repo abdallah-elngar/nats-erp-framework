@@ -1,0 +1,42 @@
+{{define "developer"}}
+<!DOCTYPE html>
+<html lang="{{.Locale}}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} | NATS ERP</title>
+
+    <!-- Static Files - Local -->
+    <link rel="stylesheet" href="/static/css/tailwind/tailwind.min.css">
+    <link rel="stylesheet" href="/static/css/app.css">
+    <link rel="stylesheet" href="/static/css/admin.css">
+
+    <script src="/static/js/htmx/htmx.min.js"></script>
+    <script src="/static/js/alpine/alpine.min.js"></script>
+    <script src="/static/js/app.js"></script>
+    <script src="/static/js/dashboard.js"></script>
+
+    <style>
+        [x-cloak] { display: none !important; }
+        .developer-only { display: none; }
+        .developer-mode .developer-only { display: block; }
+        .production-mode .developer-only { display: none; }
+    </style>
+</head>
+<body>
+    <div x-data="developerApp()" x-cloak :class="mode === 'developer' ? 'developer-mode' : 'production-mode'">
+        {{template "sidebar" .}}
+        <div class="main ml-64 p-6 min-h-screen bg-gray-100">
+            {{template "navbar" .}}
+            {{template "content" .}}
+            {{template "footer" .}}
+        </div>
+    </div>
+
+    <!-- Modals -->
+    {{template "modal_create_app" .}}
+    {{template "modal_add_field" .}}
+    {{template "modal_link_app" .}}
+</body>
+</html>
+{{end}}

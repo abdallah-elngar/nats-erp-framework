@@ -1,0 +1,204 @@
+/* ============================================
+   Dark Theme
+   ============================================ */
+
+.dark {
+    --bg-primary: #1f2937;
+    --bg-secondary: #111827;
+    --bg-tertiary: #374151;
+    
+    --text-primary: #f9fafb;
+    --text-secondary: #9ca3af;
+    --text-light: #6b7280;
+    
+    --border-color: #374151;
+}
+
+.dark body {
+    background-color: #111827;
+    color: #f9fafb;
+}
+
+.dark .bg-white {
+    background-color: #1f2937 !important;
+}
+
+.dark .bg-gray-50 {
+    background-color: #111827 !important;
+}
+
+.dark .bg-gray-100 {
+    background-color: #1f2937 !important;
+}
+
+.dark .text-gray-900 {
+    color: #f9fafb !important;
+}
+
+.dark .text-gray-700 {
+    color: #d1d5db !important;
+}
+
+.dark .text-gray-600 {
+    color: #9ca3af !important;
+}
+
+.dark .text-gray-500 {
+    color: #6b7280 !important;
+}
+
+.dark .border-gray-200 {
+    border-color: #374151 !important;
+}
+
+.dark .border-gray-300 {
+    border-color: #4b5563 !important;
+}
+
+.dark .hover\:bg-gray-100:hover {
+    background-color: #374151 !important;
+}
+
+.dark .shadow {
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.5);
+}
+
+.dark .shadow-sm {
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+}
+
+.dark .shadow-md {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+}
+
+.dark .shadow-lg {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+}
+
+/* Dark Theme - Sidebar */
+.dark .admin-sidebar {
+    background-color: #111827 !important;
+}
+
+.dark .admin-sidebar-brand {
+    border-bottom-color: #374151 !important;
+}
+
+.dark .admin-sidebar-nav a {
+    color: #9ca3af !important;
+}
+
+.dark .admin-sidebar-nav a:hover {
+    background-color: #374151 !important;
+    color: #f9fafb !important;
+}
+
+.dark .admin-sidebar-nav a.active {
+    background-color: #4f46e5 !important;
+    color: #fff !important;
+}
+
+.dark .admin-sidebar-nav .nav-divider {
+    background-color: #374151 !important;
+}
+
+/* Dark Theme - Cards */
+.dark .admin-card {
+    background-color: #1f2937 !important;
+}
+
+.dark .admin-card-header {
+    border-bottom-color: #374151 !important;
+}
+
+/* Dark Theme - Tables */
+.dark .admin-table thead {
+    background-color: #111827 !important;
+}
+
+.dark .admin-table th {
+    color: #9ca3af !important;
+    border-bottom-color: #374151 !important;
+}
+
+.dark .admin-table td {
+    border-bottom-color: #374151 !important;
+}
+
+.dark .admin-table tbody tr:hover {
+    background-color: #374151 !important;
+}
+
+/* Dark Theme - Forms */
+.dark .admin-form-control {
+    background-color: #374151 !important;
+    border-color: #4b5563 !important;
+    color: #f9fafb !important;
+}
+
+.dark .admin-form-control:focus {
+    border-color: #4f46e5 !important;
+}
+
+.dark .admin-form-label {
+    color: #f9fafb !important;
+}
+
+/* Dark Theme - Modals */
+.dark .modal-content {
+    background-color: #1f2937 !important;
+}
+
+.dark .modal-header {
+    border-bottom-color: #374151 !important;
+}
+
+.dark .modal-footer {
+    border-top-color: #374151 !important;
+}
+
+/* Dark Theme - Alerts */
+.dark .alert-success {
+    background-color: #065f46 !important;
+    color: #d1fae5 !important;
+    border-color: #047857 !important;
+}
+
+.dark .alert-danger {
+    background-color: #991b1b !important;
+    color: #fee2e2 !important;
+    border-color: #dc2626 !important;
+}
+
+.dark .alert-warning {
+    background-color: #92400e !important;
+    color: #fef3c7 !important;
+    border-color: #d97706 !important;
+}
+
+.dark .alert-info {
+    background-color: #1e40af !important;
+    color: #dbeafe !important;
+    border-color: #2563eb !important;
+}
+
+/* Dark Theme - Badges */
+.dark .badge-primary {
+    background-color: #1e40af !important;
+    color: #dbeafe !important;
+}
+
+.dark .badge-success {
+    background-color: #065f46 !important;
+    color: #d1fae5 !important;
+}
+
+.dark .badge-danger {
+    background-color: #991b1b !important;
+    color: #fee2e2 !important;
+}
+
+.dark .badge-warning {
+    background-color: #92400e !important;
+    color: #fef3c7 !important;
+}

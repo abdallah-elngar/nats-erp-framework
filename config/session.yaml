@@ -1,0 +1,189 @@
+# ============================================
+# Session Configuration
+# ============================================
+
+# إعدادات الجلسات
+session:
+  # نوع التخزين: memory, redis, database
+  driver: memory
+  
+  # اسم الكوكي
+  name: nats_session
+  
+  # مدة الجلسة (بالدقائق)
+  lifetime: 120
+  
+  # تفعيل الأمان
+  secure: false
+  
+  # تفعيل HttpOnly
+  http_only: true
+  
+  # تفعيل SameSite
+  same_site: lax
+  
+  # مسار الجلسة
+  path: /
+  
+  # نطاق الجلسة
+  domain: ""
+  
+  # إعادة توليد المعرف عند تسجيل الدخول
+  regenerate: true
+  
+  # إعادة توليد المعرف عند تغيير الصلاحيات
+  regenerate_permissions: true
+  
+  # مفتاح التشفير (يجب تغييره في الإنتاج)
+  encryption_key: change-this-encryption-key-in-production
+  
+  # مفتاح التشفير الإضافي (للتوافق مع الإصدارات السابقة)
+  encryption_key_old: ""
+  
+  # إعدادات التخزين في الذاكرة
+  memory:
+    # عدد الجلسات القصوى في الذاكرة
+    max_sessions: 10000
+    
+    # مدة تنظيف الجلسات المنتهية (بالثواني)
+    cleanup_interval: 60
+    
+  # إعدادات تخزين Redis
+  redis:
+    # مفتاح البادئة
+    prefix: "session:"
+    
+    # مدة انتهاء الصلاحية (بالثواني)
+    ttl: 7200
+    
+    # إعدادات الاتصال
+    host: localhost
+    port: 6379
+    password: ""
+    database: 0
+    pool_size: 10
+    min_idle_conns: 5
+    dial_timeout: 5s
+    read_timeout: 3s
+    write_timeout: 3s
+    pool_timeout: 4s
+    idle_timeout: 300s
+    max_retries: 3
+    
+  # إعدادات تخزين قاعدة البيانات
+  database:
+    # جدول الجلسات
+    table: sessions
+    
+    # العمود المستخدم للمفتاح
+    id_column: id
+    
+    # العمود المستخدم للبيانات
+    data_column: data
+    
+    # العمود المستخدم للانتهاء
+    expires_at_column: expires_at
+    
+    # العمود المستخدم للمستخدم
+    user_id_column: user_id
+    
+    # مدة انتهاء الصلاحية (بالثواني)
+    ttl: 7200
+    
+  # إعدادات كوكي الجلسة
+  cookie:
+    # تفعيل كوكي الأمان
+    secure: false
+    
+    # تفعيل HttpOnly
+    http_only: true
+    
+    # تفعيل SameSite
+    same_site: lax
+    
+    # مسار الكوكي
+    path: /
+    
+    # نطاق الكوكي
+    domain: ""
+    
+    # مدة انتهاء الكوكي (بالثواني)
+    max_age: 7200
+    
+  # إعدادات الأمان
+  security:
+    # التحقق من IP
+    check_ip: true
+    
+    # التحقق من User-Agent
+    check_user_agent: true
+    
+    # مدة انتهاء الجلسة في حالة الخمول (بالثواني)
+    idle_timeout: 1800  # 30 دقيقة
+    
+    # مدة انتهاء الجلسة المطلقة (بالثواني)
+    absolute_timeout: 86400  # 24 ساعة
+    
+    # عدد المحاولات الفاشلة قبل قفل الجلسة
+    max_attempts: 5
+    
+    # مدة قفل الجلسة بعد المحاولات الفاشلة (بالثواني)
+    lock_duration: 900  # 15 دقيقة
+
+# إعدادات الجلسة للتطبيقات
+apps:
+  core:
+    enabled: true
+    lifetime: 120
+    
+  users:
+    enabled: true
+    lifetime: 120
+    
+  admin:
+    enabled: true
+    lifetime: 60  # جلسة أقصر للمشرفين
+
+# إعدادات الجلسة للمستخدمين
+users:
+  # مدة بقاء المستخدم مسجلاً (تذكرني)
+  remember_me: true
+  remember_me_lifetime: 604800  # 7 أيام
+  
+  # مدة بقاء المستخدم مسجلاً (تذكرني) - للمشرفين
+  admin_remember_me_lifetime: 86400  # 24 ساعة
+  
+  # إلغاء الجلسة عند تغيير كلمة المرور
+  invalidate_on_password_change: true
+  
+  # إلغاء الجلسة عند تغيير البريد الإلكتروني
+  invalidate_on_email_change: true
+  
+  # إلغاء الجلسة عند تغيير الصلاحيات
+  invalidate_on_permission_change: true
+  
+  # عدد الجلسات المتزامنة المسموح بها (0 = غير محدود)
+  max_concurrent_sessions: 3
+
+# إعدادات الجلسة لواجهة برمجة التطبيقات
+api:
+  # تفعيل الجلسة للـ API
+  enabled: true
+  
+  # مدة الجلسة للـ API (بالثواني)
+  lifetime: 3600
+  
+  # تفعيل التوكن في الـ Header
+  header_enabled: true
+  
+  # اسم الـ Header
+  header_name: X-Session-Token
+  
+  # تفعيل التوكن في الـ Cookie
+  cookie_enabled: true
+  
+  # اسم الـ Cookie
+  cookie_name: api_session
+  
+  # تفعيل التوكن في معاملات URL
+  url_enabled: false

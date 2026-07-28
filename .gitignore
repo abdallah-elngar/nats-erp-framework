@@ -1,0 +1,51 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+nats
+dist/
+
+# Go workspace
+go.work
+go.work.sum
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Dependencies
+vendor/
+
+# Storage
+storage/logs/
+storage/cache/
+storage/sessions/
+storage/uploads/
+storage/reports/
+!storage/.gitkeep
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Coverage
+coverage.out
+coverage.html
+
+# Build artifacts
+*.exe
+*.dll
+*.so
+*.dylib

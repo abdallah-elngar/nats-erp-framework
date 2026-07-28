@@ -1,0 +1,17 @@
+{{ extends "main" }}
+
+{{ block "title" . }}{{ .Title }}{{ endblock }}
+
+{{ block "content" . }}
+<div class="container">
+    <h2>Welcome {{ .User.Username }}</h2>
+    <p>Email: {{ .User.Email }}</p>
+    
+    <h3>Items:</h3>
+    <ul>
+    {{ range .Items }}
+        <li>{{ . }}</li>
+    {{ end }}
+    </ul>
+</div>
+{{ endblock }}

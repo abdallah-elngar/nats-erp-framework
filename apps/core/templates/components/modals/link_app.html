@@ -1,0 +1,80 @@
+{{ define "components/modals/link_app" }}
+<div class="modal" x-show="showLinkApp" @click.away="showLinkApp = false" x-cloak>
+    <div class="modal-content max-w-lg">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold text-gray-800">
+                <i class="fas fa-link text-purple-500 me-2"></i>ربط التطبيقات
+            </h2>
+            <button class="text-gray-400 hover:text-gray-600 text-2xl" @click="showLinkApp = false">✕</button>
+        </div>
+        
+        <!-- Form -->
+        <form @submit.prevent="executeLinkApp()" class="space-y-4">
+            <!-- Parent App -->
+            <div class="form-group">
+                <label class="form-label">التطبيق الأب <span class="text-red-500">*</span></label>
+                <select x-model="linkApp.parent" class="form-control" required>
+                    <option value="">اختر التطبيق الأب</option>
+                    <template x-for="app in apps" :key="app.name">
+                        <option :value="app.name" x-text="app.name"></option>
+                    </template>
+                </select>
+                <p class="form-hint">التطبيق الرئيسي الذي يملك العلاقة</p>
+            </div>
+            
+            <!-- Child App -->
+            <div class="form-group">
+                <label class="form-label">التطبيق الابن <span class="text-red-500">*</span></label>
+                <select x-model="linkApp.child" class="form-control" required>
+                    <option value="">اختر التطبيق الابن</option>
+                    <template x-for="app in apps" :key="app.name">
+                        <option :value="app.name" x-text="app.name"></option>
+                    </template>
+                </select>
+                <p class="form-hint">التطبيق المرتبط بالتطبيق الأب</p>
+            </div>
+            
+            <!-- Relation Type -->
+            <div class="form-group">
+                <label class="form-label">نوع العلاقة <span class="text-red-500">*</span></label>
+                <select x-model="linkApp.type" class="form-control" required>
+                    <option value="one-to-one">واحد إلى واحد (One-to-One)</option>
+                    <option value="one-to-many">واحد إلى متعدد (One-to-Many)</option>
+                    <option value="many-to-many">متعدد إلى متعدد (Many-to-Many)</option>
+                </select>
+                <p class="form-hint">كيف يرتبط التطبيقان ببعضهما</p>
+            </div>
+            
+            <!-- Foreign Key (conditional) -->
+            <div class="form-group" x-show="linkApp.type === 'one-to-many' || linkApp.type === 'many-to-many'">
+                <label class="form-label">حقل المفتاح الخارجي</label>
+                <input type="text" x-model="linkApp.foreignKey" class="form-control" 
+                       placeholder="مثال: parent_id, app_id">
+                <p class="form-hint">الحقل الذي سيُستخدم كمفتاح خارجي</p>
+            </div>
+            
+            <!-- Info -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-700">
+                <i class="fas fa-info-circle me-2"></i>
+                سيتم إنشاء علاقة بين التطبيقين مع إعدادات الصلاحيات تلقائياً.
+            </div>
+            
+            <!-- Actions -->
+            <div class="flex justify-end gap-2 pt-4 border-t border-gray-200">
+                <button type="button" class="btn btn-secondary" @click="showLinkApp = false">
+                    إلغاء
+                </button>
+                <button type="submit" class="btn btn-primary" :disabled="linking">
+                    <span x-show="!linking">
+                        <i class="fas fa-link me-2"></i>ربط
+                    </span>
+                    <span x-show="linking">
+                        <i class="fas fa-spinner fa-spin me-2"></i>جاري...
+                    </span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{{ end }}

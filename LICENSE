@@ -1,0 +1,55 @@
+
+### 3. **Makefile**
+```makefile
+.PHONY: build clean test install
+
+# المتغيرات
+BINARY_NAME=nats
+BUILD_DIR=./dist
+CMD_DIR=./cmd/nats
+
+# بناء النظام
+build:
+	@echo "🔨 Building NATS Framework..."
+	@mkdir -p $(BUILD_DIR)
+	@go build -o $(BUILD_DIR)/$(BINARY_NAME) $(CMD_DIR)/main.go
+	@echo "✅ Build complete: $(BUILD_DIR)/$(BINARY_NAME)"
+
+# تثبيت CLI عالمياً
+install:
+	@echo "📦 Installing NATS CLI..."
+	@go install $(CMD_DIR)/main.go
+	@echo "✅ Installed: nats"
+
+# تشغيل الاختبارات
+test:
+	@echo "🧪 Running tests..."
+	@go test -v ./...
+
+# تنظيف الملفات
+clean:
+	@echo "🧹 Cleaning..."
+	@rm -rf $(BUILD_DIR)
+	@rm -rf ./storage/cache/*
+	@echo "✅ Clean complete"
+
+# تشغيل التطبيق (تطوير)
+dev:
+	@echo "🚀 Running in development mode..."
+	@go run $(CMD_DIR)/main.go serve --debug
+
+# بناء Docker
+docker-build:
+	@echo "🐳 Building Docker image..."
+	@docker build -t nats-framework:latest .
+
+# المساعدة
+help:
+	@echo "Available commands:"
+	@echo "  make build        - Build the framework"
+	@echo "  make install      - Install CLI globally"
+	@echo "  make test         - Run tests"
+	@echo "  make clean        - Clean build artifacts"
+	@echo "  make dev          - Run in development mode"
+	@echo "  make docker-build - Build Docker image"
+	@echo "  make help         - Show this help"

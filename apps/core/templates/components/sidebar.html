@@ -1,0 +1,76 @@
+{{ define "components/sidebar" }}
+<!-- Sidebar -->
+<aside class="sidebar w-64 flex-shrink-0 p-0">
+    <div class="p-4 text-center border-b border-gray-700">
+        <h4 class="text-white font-bold m-0">
+            <i class="fas fa-code text-indigo-400 me-2"></i>
+            <span class="text-xl">النظام الذكي</span>
+        </h4>
+        <span class="text-xs text-gray-500">v1.0.0</span>
+    </div>
+    
+    <nav class="pt-4">
+        <!-- Dashboard -->
+        <a class="sidebar-link" :class="currentView === 'dashboard' ? 'active' : ''" 
+           @click="navigateTo('dashboard')" href="#">
+            <i class="fas fa-th-large"></i> لوحة التحكم
+        </a>
+        
+        <!-- Applications -->
+        <a class="sidebar-link" :class="currentView === 'apps' ? 'active' : ''" 
+           @click="navigateTo('apps')" href="#">
+            <i class="fas fa-th"></i> التطبيقات
+            <span class="mr-auto bg-indigo-500 text-white text-xs px-2 py-0.5 rounded-full" 
+                  x-text="apps.length">0</span>
+        </a>
+        
+        <!-- Models -->
+        <a class="sidebar-link" :class="currentView === 'models' ? 'active' : ''" 
+           @click="navigateTo('models')" href="#" x-show="selectedApp">
+            <i class="fas fa-database"></i> النماذج
+        </a>
+        
+        <!-- Relations -->
+        <a class="sidebar-link" :class="currentView === 'relations' ? 'active' : ''" 
+           @click="navigateTo('relations')" href="#">
+            <i class="fas fa-link"></i> العلاقات
+            <span class="mr-auto bg-green-500 text-white text-xs px-2 py-0.5 rounded-full" 
+                  x-text="relations.length">0</span>
+        </a>
+        
+        <hr class="mx-4 my-4 border-gray-700">
+        
+        <!-- Migrations -->
+        <a class="sidebar-link" :class="currentView === 'migrations' ? 'active' : ''" 
+           @click="navigateTo('migrations')" href="#">
+            <i class="fas fa-arrow-up"></i> الهجرات
+            <span class="mr-auto bg-yellow-500 text-white text-xs px-2 py-0.5 rounded-full" 
+                  x-show="pendingMigrations" x-text="pendingMigrations">0</span>
+        </a>
+        
+        <!-- Settings -->
+        <a class="sidebar-link" :class="currentView === 'settings' ? 'active' : ''" 
+           @click="navigateTo('settings')" href="#">
+            <i class="fas fa-cog"></i> الإعدادات
+        </a>
+        
+        <hr class="mx-4 my-4 border-gray-700">
+        
+        <!-- Mode Toggle -->
+        <div class="px-4 py-2">
+            <div class="flex items-center justify-between bg-gray-800 rounded-lg p-1">
+                <button class="flex-1 py-1.5 px-3 rounded-md text-xs font-medium transition"
+                        :class="mode === 'developer' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'"
+                        @click="setMode('developer')">
+                    🛠️ مطور
+                </button>
+                <button class="flex-1 py-1.5 px-3 rounded-md text-xs font-medium transition"
+                        :class="mode === 'production' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'"
+                        @click="setMode('production')">
+                    🌐 مستخدم
+                </button>
+            </div>
+        </div>
+    </nav>
+</aside>
+{{ end }}

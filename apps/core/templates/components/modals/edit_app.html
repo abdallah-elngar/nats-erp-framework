@@ -1,0 +1,86 @@
+{{ define "components/modals/edit_app" }}
+<div class="modal" x-show="showEditApp" @click.away="showEditApp = false" x-cloak>
+    <div class="modal-content max-w-2xl">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold text-gray-800">
+                <i class="fas fa-edit text-yellow-500 me-2"></i>تعديل التطبيق
+                <span class="text-sm text-gray-500" x-text="'(' + editApp.name + ')'"></span>
+            </h2>
+            <button class="text-gray-400 hover:text-gray-600 text-2xl" @click="showEditApp = false">✕</button>
+        </div>
+        
+        <!-- Form -->
+        <form @submit.prevent="executeEditApp()" class="space-y-4">
+            <!-- App Name (readonly) -->
+            <div class="form-group">
+                <label class="form-label">اسم التطبيق</label>
+                <input type="text" x-model="editApp.name" class="form-control bg-gray-100" disabled>
+                <p class="form-hint">لا يمكن تغيير اسم التطبيق</p>
+            </div>
+            
+            <!-- Description -->
+            <div class="form-group">
+                <label class="form-label">الوصف</label>
+                <input type="text" x-model="editApp.description" class="form-control" 
+                       placeholder="وصف التطبيق">
+            </div>
+            
+            <!-- Status -->
+            <div class="form-group">
+                <label class="form-label">الحالة</label>
+                <select x-model="editApp.status" class="form-control">
+                    <option value="active">نشط</option>
+                    <option value="inactive">غير نشط</option>
+                    <option value="maintenance">صيانة</option>
+                </select>
+            </div>
+            
+            <!-- Models Section -->
+            <div class="border-t border-gray-200 pt-4 mt-4">
+                <h3 class="text-md font-semibold text-gray-700 mb-3">
+                    <i class="fas fa-database text-indigo-500 me-2"></i>النماذج
+                </h3>
+                
+                <div class="space-y-2">
+                    <template x-for="(model, index) in editApp.models" :key="index">
+                        <div class="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                            <span class="font-medium text-sm" x-text="model.name"></span>
+                            <span class="text-xs text-gray-400" x-text="model.fields || 'لا توجد حقول'"></span>
+                            <button type="button" class="btn btn-danger btn-sm mr-auto" 
+                                    @click="editApp.models.splice(index, 1)">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </template>
+                    <button type="button" class="btn btn-secondary btn-sm" 
+                            @click="editApp.models.push({name: '', fields: ''})">
+                        <i class="fas fa-plus me-1"></i> إضافة نموذج
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Migration Warning -->
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-700">
+                <i class="fas fa-info-circle me-2"></i>
+                سيتم إنشاء هجرات (Migrations) جديدة عند إضافة أو تعديل النماذج.
+            </div>
+            
+            <!-- Actions -->
+            <div class="flex justify-end gap-2 pt-4 border-t border-gray-200">
+                <button type="button" class="btn btn-secondary" @click="showEditApp = false">
+                    إلغاء
+                </button>
+                <button type="submit" class="btn btn-warning" :disabled="editing">
+                    <span x-show="!editing">
+                        <i class="fas fa-save me-2"></i>تحديث
+                    </span>
+                    <span x-show="editing">
+                        <i class="fas fa-spinner fa-spin me-2"></i>جاري...
+                    </span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{{ end }}

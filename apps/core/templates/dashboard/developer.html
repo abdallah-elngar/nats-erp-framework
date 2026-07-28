@@ -1,0 +1,92 @@
+{{ extends "layouts/admin" }}
+
+{{ define "title" }}🛠️ لوحة تحكم المطورين{{ end }}
+
+{{ define "content" }}
+<div x-data="developerDashboard()" x-init="init()">
+    <!-- Components -->
+    {{ template "components/navbar" . }}
+    
+    <!-- Views -->
+    <div x-show="currentView === 'dashboard'">
+        {{ template "dashboard/main" . }}
+    </div>
+    <div x-show="currentView === 'apps'">
+        {{ template "dashboard/apps" . }}
+    </div>
+    <div x-show="currentView === 'models' && selectedApp">
+        {{ template "dashboard/models" . }}
+    </div>
+    <div x-show="currentView === 'relations'">
+        {{ template "dashboard/relations" . }}
+    </div>
+    <div x-show="currentView === 'migrations'">
+        {{ template "dashboard/migrations" . }}
+    </div>
+    <div x-show="currentView === 'settings'">
+        {{ template "dashboard/settings" . }}
+    </div>
+    
+    <!-- Modals -->
+    {{ template "components/modals/create_app" . }}
+    {{ template "components/modals/edit_app" . }}
+    {{ template "components/modals/add_field" . }}
+    {{ template "components/modals/link_app" . }}
+</div>
+
+<script>
+function developerDashboard() {
+    return {
+        // ============================================
+        // STATE
+        // ============================================
+        mode: 'developer',
+        currentView: 'dashboard',
+        pageTitle: 'لوحة التحكم',
+        sidebarOpen: true,
+        
+        // Data
+        apps: [],
+        selectedApp: null,
+        selectedModel: null,
+        selectedFields: [],
+        relations: [],
+        notifications: [],
+        pendingMigrations: 0,
+        totalModels: 0,
+        
+        // User
+        user: {
+            username: 'Admin',
+            initials: 'A'
+        },
+        
+        // Create App
+        showCreateApp: false,
+        creating: false,
+        newApp: {
+            name: '',
+            description: '',
+            parent: 'core',
+            models: [{name: '', fields: ''}],
+            crud: 'yes'
+        },
+        
+        // Edit App
+        showEditApp: false,
+        editing: false,
+        editApp: {
+            name: '',
+            description: '',
+            status: 'active',
+            models: []
+        },
+        
+        // Link App
+        showLinkApp: false,
+        linking: false,
+        linkApp: {
+            parent: '',
+            child: '',
+            type: 'one-to-many',
+            foreignKey

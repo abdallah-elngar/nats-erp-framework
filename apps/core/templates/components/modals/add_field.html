@@ -1,0 +1,99 @@
+{{ define "components/modals/add_field" }}
+<div class="modal" x-show="showAddField" @click.away="showAddField = false" x-cloak>
+    <div class="modal-content max-w-lg">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold text-gray-800">
+                <i class="fas fa-plus-circle text-green-500 me-2"></i>إضافة حقل جديد
+            </h2>
+            <button class="text-gray-400 hover:text-gray-600 text-2xl" @click="showAddField = false">✕</button>
+        </div>
+        
+        <!-- Form -->
+        <form @submit.prevent="executeAddField()" class="space-y-4">
+            <!-- Field Name -->
+            <div class="form-group">
+                <label class="form-label">اسم الحقل <span class="text-red-500">*</span></label>
+                <input type="text" x-model="newField.name" class="form-control" 
+                       placeholder="مثال: email, phone, salary" required>
+                <p class="form-hint">استخدم أحرف صغيرة وشرطات سفلية (مثال: employee_email)</p>
+            </div>
+            
+            <!-- Field Type -->
+            <div class="form-group">
+                <label class="form-label">نوع الحقل <span class="text-red-500">*</span></label>
+                <select x-model="newField.type" class="form-control" required>
+                    <option value="string">نص (String)</option>
+                    <option value="text">نص طويل (Text)</option>
+                    <option value="int">رقم صحيح (Integer)</option>
+                    <option value="float">رقم عشري (Float)</option>
+                    <option value="bool">منطقي (Boolean)</option>
+                    <option value="date">تاريخ (Date)</option>
+                    <option value="datetime">تاريخ ووقت (DateTime)</option>
+                    <option value="time">وقت (Time)</option>
+                    <option value="json">JSON</option>
+                    <option value="relation">علاقة (Relation)</option>
+                </select>
+            </div>
+            
+            <!-- Options -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="form-group">
+                    <label class="form-label">مطلوب</label>
+                    <select x-model="newField.required" class="form-control">
+                        <option value="false">لا</option>
+                        <option value="true">نعم</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">فريد</label>
+                    <select x-model="newField.unique" class="form-control">
+                        <option value="false">لا</option>
+                        <option value="true">نعم</option>
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Relation (conditional) -->
+            <div class="form-group" x-show="newField.type === 'relation'">
+                <label class="form-label">النموذج المرتبط</label>
+                <select x-model="newField.relatedModel" class="form-control">
+                    <option value="">اختر النموذج</option>
+                    <template x-for="model in availableModels" :key="model">
+                        <option :value="model" x-text="model"></option>
+                    </template>
+                </select>
+                <p class="form-hint">النموذج الذي سترتبط به هذه العلاقة</p>
+            </div>
+            
+            <!-- Default Value -->
+            <div class="form-group">
+                <label class="form-label">القيمة الافتراضية (اختياري)</label>
+                <input type="text" x-model="newField.default" class="form-control" 
+                       placeholder="مثال: 0, '', true, false">
+            </div>
+            
+            <!-- Migration Warning -->
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-700">
+                <i class="fas fa-info-circle me-2"></i>
+                سيتم إنشاء هجرة (Migration) تلقائياً عند إضافة الحقل.
+            </div>
+            
+            <!-- Actions -->
+            <div class="flex justify-end gap-2 pt-4 border-t border-gray-200">
+                <button type="button" class="btn btn-secondary" @click="showAddField = false">
+                    إلغاء
+                </button>
+                <button type="submit" class="btn btn-success" :disabled="addingField">
+                    <span x-show="!addingField">
+                        <i class="fas fa-save me-2"></i>إضافة
+                    </span>
+                    <span x-show="addingField">
+                        <i class="fas fa-spinner fa-spin me-2"></i>جاري...
+                    </span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{{ end }}

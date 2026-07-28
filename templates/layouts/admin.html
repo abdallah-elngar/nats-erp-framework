@@ -1,0 +1,53 @@
+{{define "admin"}}
+<!DOCTYPE html>
+<html lang="{{.Locale}}" x-data="{ theme: localStorage.getItem('theme') || 'light' }" :class="theme">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} | NATS ERP</title>
+    
+    <!-- Static Files - Local -->
+    <link rel="stylesheet" href="/static/css/tailwind/tailwind.min.css">
+    <link rel="stylesheet" href="/static/fonts/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/app.css">
+    <link rel="stylesheet" href="/static/css/admin.css">
+    <link rel="stylesheet" href="/static/css/themes/{{.Theme}}.css">
+    
+    <script src="/static/js/htmx/htmx.min.js"></script>
+    <script src="/static/js/alpine/alpine.min.js"></script>
+    <script src="/static/js/app.js"></script>
+    <script src="/static/js/admin.js"></script>
+    
+    <style>
+        /* إصلاحات سريعة */
+        [x-cloak] { display: none !important; }
+        .transition-all { transition: all 0.3s ease-in-out; }
+    </style>
+</head>
+<body>
+    <div id="app" x-data="adminApp()" class="min-h-screen bg-gray-50 dark:bg-gray-900">
+        
+        <!-- Navbar -->
+        {{template "admin_navbar" .}}
+        
+        <!-- Sidebar -->
+        {{template "admin_sidebar" .}}
+        
+        <!-- Main Content -->
+        <main class="pt-16 transition-all duration-300" :class="sidebarOpen ? 'ml-64' : 'ml-0'">
+            <div class="p-6">
+                <!-- Breadcrumb -->
+                {{template "admin_breadcrumb" .}}
+                
+                <!-- Page Content -->
+                {{template "admin_content" .}}
+            </div>
+        </main>
+        
+        <!-- Footer -->
+        {{template "admin_footer" .}}
+        
+    </div>
+</body>
+</html>
+{{end}}

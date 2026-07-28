@@ -1,0 +1,60 @@
+{{define "content"}}
+<!-- Stats -->
+<div class="grid grid-cols-4 gap-4 mb-6">
+    <div class="card bg-white rounded-xl shadow-sm p-6">
+        <div class="text-sm text-gray-500">📦 Apps</div>
+        <div class="text-2xl font-bold" x-text="stats.apps">0</div>
+    </div>
+    <div class="card bg-white rounded-xl shadow-sm p-6">
+        <div class="text-sm text-gray-500">📊 Models</div>
+        <div class="text-2xl font-bold" x-text="stats.models">0</div>
+    </div>
+    <div class="card bg-white rounded-xl shadow-sm p-6">
+        <div class="text-sm text-gray-500">👤 Users</div>
+        <div class="text-2xl font-bold" x-text="stats.users">0</div>
+    </div>
+    <div class="card bg-white rounded-xl shadow-sm p-6">
+        <div class="text-sm text-gray-500">🔗 Relations</div>
+        <div class="text-2xl font-bold" x-text="stats.relations">0</div>
+    </div>
+</div>
+
+<!-- Applications -->
+<div class="card bg-white rounded-xl shadow-sm p-6">
+    <div class="card-header flex justify-between items-center mb-4 flex-wrap gap-2">
+        <h2 class="text-lg font-semibold">📦 Applications</h2>
+        <div class="flex gap-2">
+            <button class="btn btn-primary developer-only" @click="showCreateApp = true">➕ Create App</button>
+            <button class="btn btn-secondary" @click="loadApps()">🔄 Refresh</button>
+        </div>
+    </div>
+
+    <div x-show="apps.length === 0" class="empty-state text-center py-12 text-gray-400">
+        <div class="text-5xl mb-4">📦</div>
+        <p>No applications found</p>
+    </div>
+
+    <div x-show="apps.length > 0">
+        <table class="w-full">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">App Name</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Models</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                <template x-for="app in apps" :key="app.name">
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-4 py-3 font-medium" x-text="app.name"></td>
+                        <td class="px-4 py-3" x-text="app.models"></td>
+                        <td class="px-4 py-3">
+                            <span class="badge badge-success" x-text="app.status"></span>
+                        </td>
+                    </tr>
+                </template>
+            </tbody>
+        </table>
+    </div>
+</div>
+{{end}}

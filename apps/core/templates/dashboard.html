@@ -1,0 +1,292 @@
+{{define "content"}}
+<div x-data="dashboard()" class="space-y-6">
+    <!-- Welcome Section -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">👋 Welcome back, {{.User.FullName}}!</h1>
+                <p class="text-gray-500 dark:text-gray-400 mt-1">Here's what's happening with your ERP system today.</p>
+            </div>
+            <div class="flex gap-2">
+                <button class="btn btn-primary" hx-get="/admin/settings" hx-target="#modal-content" @click="showModal = true">
+                    <i class="fas fa-cog mr-2"></i>Settings
+                </button>
+                <button class="btn btn-secondary" hx-get="/admin/reports" hx-target="#modal-content" @click="showModal = true">
+                    <i class="fas fa-file-alt mr-2"></i>Reports
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Users Stats -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Users</p>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1" x-text="stats.users || 0"></p>
+                </div>
+                <div class="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                    <i class="fas fa-users text-blue-600 dark:text-blue-400 text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-3 text-sm text-gray-500 dark:text-gray-400">
+                <span class="text-green-500">↑ 12%</span> from last month
+            </div>
+        </div>
+
+        <!-- Apps Stats -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Applications</p>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1" x-text="stats.apps || 0"></p>
+                </div>
+                <div class="p-3 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                    <i class="fas fa-th-large text-green-600 dark:text-green-400 text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-3 text-sm text-gray-500 dark:text-gray-400">
+                <span class="text-green-500">↑ 5%</span> from last month
+            </div>
+        </div>
+
+        <!-- Records Stats -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Records</p>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1" x-text="stats.records || 0"></p>
+                </div>
+                <div class="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                    <i class="fas fa-database text-purple-600 dark:text-purple-400 text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-3 text-sm text-gray-500 dark:text-gray-400">
+                <span class="text-green-500">↑ 8%</span> from last month
+            </div>
+        </div>
+
+        <!-- Storage Stats -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Storage Used</p>
+                    <p class="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1" x-text="stats.storage || '0 MB'"></p>
+                </div>
+                <div class="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+                    <i class="fas fa-hard-drive text-orange-600 dark:text-orange-400 text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-3 text-sm text-gray-500 dark:text-gray-400">
+                <span class="text-yellow-500">↑ 3%</span> from last month
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">⚡ Quick Actions</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <button class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-center" 
+                    hx-get="/admin/apps/create" hx-target="#modal-content" @click="showModal = true">
+                <i class="fas fa-plus-circle text-2xl text-primary-500 mb-2 block"></i>
+                <span class="text-sm text-gray-700 dark:text-gray-300">New App</span>
+            </button>
+            
+            <button class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-center"
+                    hx-get="/admin/users/create" hx-target="#modal-content" @click="showModal = true">
+                <i class="fas fa-user-plus text-2xl text-green-500 mb-2 block"></i>
+                <span class="text-sm text-gray-700 dark:text-gray-300">Add User</span>
+            </button>
+            
+            <button class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-center"
+                    hx-get="/admin/backup" hx-target="#modal-content" @click="showModal = true">
+                <i class="fas fa-download text-2xl text-blue-500 mb-2 block"></i>
+                <span class="text-sm text-gray-700 dark:text-gray-300">Backup</span>
+            </button>
+            
+            <button class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-center"
+                    hx-get="/admin/reports/create" hx-target="#modal-content" @click="showModal = true">
+                <i class="fas fa-file-pdf text-2xl text-red-500 mb-2 block"></i>
+                <span class="text-sm text-gray-700 dark:text-gray-300">Report</span>
+            </button>
+            
+            <button class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-center"
+                    hx-get="/admin/settings" hx-target="#modal-content" @click="showModal = true">
+                <i class="fas fa-cog text-2xl text-gray-500 mb-2 block"></i>
+                <span class="text-sm text-gray-700 dark:text-gray-300">Settings</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Recent Activity & Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Recent Activity -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">🕐 Recent Activity</h2>
+            <div class="space-y-3 max-h-72 overflow-y-auto">
+                <template x-for="activity in activities" :key="activity.id">
+                    <div class="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-700/30 rounded-lg">
+                        <div class="flex-shrink-0 w-2 h-2 rounded-full mt-2" 
+                             :class="{
+                                 'bg-green-500': activity.type === 'success',
+                                 'bg-blue-500': activity.type === 'info',
+                                 'bg-yellow-500': activity.type === 'warning',
+                                 'bg-red-500': activity.type === 'error'
+                             }"></div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-sm font-medium text-gray-900 dark:text-gray-100" x-text="activity.message"></p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400" x-text="formatDate(activity.timestamp)"></p>
+                        </div>
+                    </div>
+                </template>
+                <template x-if="activities.length === 0">
+                    <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                        <i class="fas fa-inbox text-4xl mb-2 block"></i>
+                        <p>No recent activity</p>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- System Status -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">📊 System Status</h2>
+            <div class="space-y-4">
+                <div>
+                    <div class="flex justify-between text-sm text-gray-500 dark:text-gray-400 mb-1">
+                        <span>CPU Usage</span>
+                        <span x-text="system.cpu || '0%'"></span>
+                    </div>
+                    <div class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div class="h-full bg-blue-500 rounded-full transition-all" :style="`width: ${system.cpu || 0}%`"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between text-sm text-gray-500 dark:text-gray-400 mb-1">
+                        <span>Memory Usage</span>
+                        <span x-text="system.memory || '0%'"></span>
+                    </div>
+                    <div class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div class="h-full bg-green-500 rounded-full transition-all" :style="`width: ${system.memory || 0}%`"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between text-sm text-gray-500 dark:text-gray-400 mb-1">
+                        <span>Storage Usage</span>
+                        <span x-text="system.storage || '0%'"></span>
+                    </div>
+                    <div class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div class="h-full bg-yellow-500 rounded-full transition-all" :style="`width: ${system.storage || 0}%`"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between text-sm text-gray-500 dark:text-gray-400 mb-1">
+                        <span>Uptime</span>
+                        <span x-text="system.uptime || '0h 0m'"></span>
+                    </div>
+                    <div class="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                        <div class="h-full bg-purple-500 rounded-full transition-all" :style="`width: ${system.uptime_percent || 0}%`"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- System Info -->
+            <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div class="grid grid-cols-2 gap-2 text-sm">
+                    <span class="text-gray-500 dark:text-gray-400">Version</span>
+                    <span class="text-gray-900 dark:text-gray-100 text-right" x-text="system.version || '1.0.0'"></span>
+                    <span class="text-gray-500 dark:text-gray-400">Go Version</span>
+                    <span class="text-gray-900 dark:text-gray-100 text-right" x-text="system.go_version || '1.21'"></span>
+                    <span class="text-gray-500 dark:text-gray-400">Database</span>
+                    <span class="text-gray-900 dark:text-gray-100 text-right" x-text="system.database || 'PostgreSQL'"></span>
+                    <span class="text-gray-500 dark:text-gray-400">Cache</span>
+                    <span class="text-gray-900 dark:text-gray-100 text-right" x-text="system.cache || 'Redis'"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function dashboard() {
+    return {
+        stats: {
+            users: 0,
+            apps: 0,
+            records: 0,
+            storage: '0 MB'
+        },
+        activities: [],
+        system: {
+            cpu: 0,
+            memory: 0,
+            storage: 0,
+            uptime: '0h 0m',
+            uptime_percent: 0,
+            version: '1.0.0',
+            go_version: '1.21',
+            database: 'PostgreSQL',
+            cache: 'Redis'
+        },
+        
+        init() {
+            this.loadStats();
+            this.loadActivities();
+            this.loadSystemStatus();
+            
+            // تحديث كل 30 ثانية
+            setInterval(() => {
+                this.loadStats();
+                this.loadActivities();
+            }, 30000);
+        },
+        
+        loadStats() {
+            fetch('/api/admin/stats')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        this.stats = data.data;
+                    }
+                })
+                .catch(() => {});
+        },
+        
+        loadActivities() {
+            fetch('/api/admin/activities')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        this.activities = data.data;
+                    }
+                })
+                .catch(() => {});
+        },
+        
+        loadSystemStatus() {
+            fetch('/api/admin/system')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        this.system = data.data;
+                    }
+                })
+                .catch(() => {});
+        },
+        
+        formatDate(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+    };
+}
+</script>
+{{end}}

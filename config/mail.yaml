@@ -1,0 +1,132 @@
+yaml
+# ============================================
+# Mail Configuration
+# ============================================
+
+# خدمة البريد الافتراضية
+default: smtp
+
+# إعدادات خدمة SMTP
+smtp:
+  host: smtp.gmail.com
+  port: 587
+  username: ""
+  password: ""
+  encryption: tls    # tls, ssl, none
+  from: "nats@example.com"
+  from_name: "NATS ERP"
+  reply_to: ""
+  return_path: ""
+  
+  # إعدادات متقدمة
+  timeout: 30s
+  keep_alive: false
+  local_name: ""
+  debug: false
+
+# إعدادات خدمة SendGrid
+sendgrid:
+  api_key: ""
+  from: "nats@example.com"
+  from_name: "NATS ERP"
+
+# إعدادات خدمة Mailgun
+mailgun:
+  domain: ""
+  api_key: ""
+  from: "nats@example.com"
+  from_name: "NATS ERP"
+  public_api_key: ""
+
+# إعدادات خدمة Amazon SES
+ses:
+  region: us-east-1
+  access_key: ""
+  secret_key: ""
+  from: "nats@example.com"
+  from_name: "NATS ERP"
+
+# إعدادات عامة للبريد
+general:
+  # استخدام HTML
+  html: true
+  
+  # استخدام القوالب
+  templates: true
+  template_path: templates/mail
+  
+  # التوقيع
+  signature: true
+  signature_text: "Best regards,\nNATS ERP Team"
+  
+  # الشعار
+  logo: true
+  logo_path: static/images/logo.svg
+  
+  # إعدادات متقدمة
+  max_retries: 3
+  retry_delay: 5s
+  queue: true
+  queue_driver: memory
+  
+  # البريد الدفعي
+  batch: false
+  batch_size: 100
+  batch_delay: 1s
+
+# قوالب البريد الإلكتروني
+templates:
+  welcome:
+    subject: "Welcome to NATS ERP"
+    template: welcome.html
+    enabled: true
+    
+  password_reset:
+    subject: "Reset Your Password"
+    template: password_reset.html
+    enabled: true
+    
+  password_changed:
+    subject: "Password Changed"
+    template: password_changed.html
+    enabled: true
+    
+  email_verification:
+    subject: "Verify Your Email"
+    template: email_verification.html
+    enabled: true
+    
+  account_created:
+    subject: "Your Account Has Been Created"
+    template: account_created.html
+    enabled: true
+    
+  account_suspended:
+    subject: "Account Suspended"
+    template: account_suspended.html
+    enabled: true
+    
+  account_reactivated:
+    subject: "Account Reactivated"
+    template: account_reactivated.html
+    enabled: true
+    
+  notification:
+    subject: "New Notification"
+    template: notification.html
+    enabled: true
+    
+  report_generated:
+    subject: "Report Generated"
+    template: report_generated.html
+    enabled: true
+    
+  backup_completed:
+    subject: "Backup Completed"
+    template: backup_completed.html
+    enabled: true
+    
+  error_alert:
+    subject: "System Error"
+    template: error_alert.html
+    enabled: true

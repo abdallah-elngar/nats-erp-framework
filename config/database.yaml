@@ -1,0 +1,76 @@
+# ============================================
+# Database Configuration
+# ============================================
+
+# قاعدة البيانات الافتراضية
+default: postgres
+
+# اتصالات قواعد البيانات
+connections:
+  # PostgreSQL (مستحسن للإنتاج)
+  postgres:
+    driver: postgres
+    host: localhost
+    port: 5432
+    database: erp_db
+    username: postgres
+    password: admin
+    options:
+      sslmode: disable
+      timezone: UTC
+      application_name: NATS
+      statement_timeout: 30s
+      idle_in_transaction_session_timeout: 60s
+    pool:
+      max_open_conns: 100
+      max_idle_conns: 10
+      conn_max_lifetime: 3600s
+      conn_max_idle_time: 600s
+      
+  # MySQL
+
+
+# إعدادات الترحيل (Migrations)
+migrations:
+  # نوع الترحيل: gorm, sql, both
+  type: both
+  
+  # مسار الترحيلات
+  path: database/migrations
+  
+  # جدول تتبع الترحيلات
+  table: migrations
+  
+  # إنشاء تلقائي للترحيلات
+  auto_migrate: true
+  
+  # التراجع التلقائي عند الفشل
+  rollback_on_error: true
+
+# إعدادات البذور (Seeds)
+seeds:
+  # تفعيل البذور
+  enabled: true
+  
+  # مسار البذور
+  path: database/seeds
+  
+  # إنشاء بيانات افتراضية
+  default_data: true
+  
+  # إنشاء بيانات اختبار
+  test_data: false
+
+# إعدادات النسخ الاحتياطي
+backup:
+  # مسار النسخ الاحتياطي
+  path: storage/backups
+  
+  # تنسيق النسخ الاحتياطي: sql, gzip
+  format: gzip
+  
+  # الاحتفاظ بالنسخ الاحتياطية (بالأيام)
+  retention_days: 30
+  
+  # ضغط النسخ الاحتياطي
+  compress: true

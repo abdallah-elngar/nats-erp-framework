@@ -1,0 +1,40 @@
+{{define "content"}}
+<div class="container mx-auto p-4">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">📄 Sale Details</h1>
+        <div class="flex gap-2">
+            <button class="btn btn-primary" hx-get="/sale/sales/{{.Item.ID}}/edit" hx-target="#modal-content" @click="showModal = true">
+                <i class="fas fa-edit mr-2"></i>Edit
+            </button>
+            <a href="/sale/sales" class="btn btn-secondary">
+                <i class="fas fa-arrow-left mr-2"></i>Back
+            </a>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6">
+        <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <dt class="text-sm font-medium text-gray-500">SA_NAME</dt>
+                <dd class="text-sm text-gray-900">{{.Item.SaName}}</dd>
+            </div>
+            <div>
+                <dt class="text-sm font-medium text-gray-500">PRICE</dt>
+                <dd class="text-sm text-gray-900">{{.Item.Price}}</dd>
+            </div>
+            <div>
+                <dt class="text-sm font-medium text-gray-500">QUANTITY</dt>
+                <dd class="text-sm text-gray-900">{{.Item.Quantity}}</dd>
+            </div>
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Created At</dt>
+                <dd class="text-sm text-gray-900">{{.Item.CreatedAt}}</dd>
+            </div>
+            <div>
+                <dt class="text-sm font-medium text-gray-500">Updated At</dt>
+                <dd class="text-sm text-gray-900">{{.Item.UpdatedAt}}</dd>
+            </div>
+        </dl>
+    </div>
+</div>
+{{end}}

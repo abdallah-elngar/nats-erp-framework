@@ -1,0 +1,73 @@
+app:
+  name: "NATS ERP System"
+  env: development
+  debug: true
+  url: "http://localhost:8080"
+  timezone: "UTC"
+  locale: "en"
+
+server:
+  host: "0.0.0.0"
+  port: 8080
+  read_timeout: "30s"
+  write_timeout: "30s"
+  idle_timeout: "120s"
+
+database:
+  default: "postgres"
+  connections:
+    postgres:
+      driver: "postgres"
+      host: "localhost"
+      port: 5432
+      database: "erp_db"
+      username: "postgres"
+      password: "admin"
+      options:
+        sslmode: "disable"
+
+cache:
+  default: "memory"
+  connections:
+    memory:
+      driver: "memory"
+    redis:
+      driver: "redis"
+      host: "localhost"
+      port: 6379
+      password: ""
+      db: 0
+
+auth:
+  jwt:
+    secret: "change-this-secret-in-production"
+    expiration: "24h"
+    refresh_expiration: "7d"
+  password:
+    algorithm: "bcrypt"
+    cost: 12
+
+session:
+  driver: "memory"
+  lifetime: 120
+  secure: false
+  domain: ""
+
+log:
+  level: "debug"
+  format: "text"
+  output: "storage/logs/app.log"
+
+mail:
+  host: "smtp.gmail.com"
+  port: 587
+  username: ""
+  password: ""
+  encryption: "tls"
+
+storage:
+  disk: "local"
+  disks:
+    local:
+      root: "storage/app"
+      url: "/storage"

@@ -1,0 +1,71 @@
+<!-- apps/core/templates/dashboard/production/dashboard.html -->
+{{define "content"}}
+<div class="production-dashboard">
+    <!-- Welcome -->
+    <div class="welcome-card">
+        <h1>👋 Welcome back, {{.User.FullName}}!</h1>
+        <p>Here's what's happening with your ERP system.</p>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">📦</div>
+            <div class="stat-info">
+                <span class="stat-value">{{.Stats.TotalRecords}}</span>
+                <span class="stat-label">Total Records</span>
+            </div>
+        </div>
+        <!-- More stats... -->
+    </div>
+
+    <!-- Available Apps (المستخدم النهائي يرى التطبيقات فقط) -->
+    <div class="apps-grid">
+        {{range .Apps}}
+        <div class="app-card" onclick="window.location.href='/app/{{.Name}}'">
+            <div class="app-icon">{{.Icon}}</div>
+            <div class="app-name">{{.DisplayName}}</div>
+            <div class="app-desc">{{.Description}}</div>
+            <button class="btn btn-primary btn-sm">Open App →</button>
+        </div>
+        {{end}}
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="activity-section">
+        <h2>🕐 Recent Activity</h2>
+        <div class="activity-list">
+            {{range .Activities}}
+            <div class="activity-item">
+                <span class="activity-icon">{{.Icon}}</span>
+                <span class="activity-text">{{.Message}}</span>
+                <span class="activity-time">{{.Time}}</span>
+            </div>
+            {{end}}
+        </div>
+    </div>
+</div>
+
+<style>
+    .production-dashboard { max-width: 1200px; margin: 0 auto; }
+    .welcome-card { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; padding: 30px; border-radius: 12px; margin-bottom: 24px; }
+    .welcome-card h1 { font-size: 28px; font-weight: 700; }
+    .welcome-card p { opacity: 0.9; margin-top: 4px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 16px; }
+    .stat-icon { font-size: 32px; }
+    .stat-info { display: flex; flex-direction: column; }
+    .stat-value { font-size: 24px; font-weight: 700; color: #1a202c; }
+    .stat-label { font-size: 12px; color: #718096; }
+    .apps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .app-card { background: white; padding: 24px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center; cursor: pointer; transition: all 0.2s; }
+    .app-card:hover { transform: translateY(-4px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    .app-icon { font-size: 40px; margin-bottom: 8px; }
+    .app-name { font-weight: 600; color: #1a202c; }
+    .app-desc { font-size: 13px; color: #718096; margin: 4px 0 12px; }
+    .activity-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #e2e8f0; }
+    .activity-icon { font-size: 18px; }
+    .activity-text { flex: 1; color: #4a5568; }
+    .activity-time { font-size: 12px; color: #a0aec0; }
+</style>
+{{end}}

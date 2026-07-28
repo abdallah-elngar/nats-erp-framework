@@ -1,0 +1,80 @@
+{{define "content"}}
+<!-- Stats -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="card">
+        <div class="text-sm text-gray-500">📦 Apps</div>
+        <div class="text-2xl font-bold" x-text="stats.apps">0</div>
+    </div>
+    <div class="card">
+        <div class="text-sm text-gray-500">📊 Models</div>
+        <div class="text-2xl font-bold" x-text="stats.models">0</div>
+    </div>
+    <div class="card">
+        <div class="text-sm text-gray-500">👤 Users</div>
+        <div class="text-2xl font-bold" x-text="stats.users">0</div>
+    </div>
+    <div class="card">
+        <div class="text-sm text-gray-500">🔗 Relations</div>
+        <div class="text-2xl font-bold" x-text="stats.relations">0</div>
+    </div>
+</div>
+
+<!-- Applications -->
+<div class="card">
+    <div class="card-header">
+        <h2>📦 Applications</h2>
+        <button class="btn btn-secondary" @click="loadApps()">🔄 Refresh</button>
+    </div>
+    <div x-show="apps.length === 0" class="empty-state">
+        <div class="icon">📦</div>
+        <p>No applications found</p>
+    </div>
+    <div x-show="apps.length > 0" class="overflow-x-auto">
+        <table>
+            <thead>
+                <tr>
+                    <th>App Name</th>
+                    <th>Models</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <template x-for="app in apps" :key="app.name">
+                    <tr>
+                        <td class="font-medium" x-text="app.name"></td>
+                        <td x-text="app.models"></td>
+                        <td><span class="badge badge-success" x-text="app.status"></span></td>
+                    </tr>
+                </template>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Relations -->
+<div class="card">
+    <div class="card-header">
+        <h2>🔗 Relations</h2>
+    </div>
+    <div x-show="relations.length === 0" class="empty-state">
+        <div class="icon">🔗</div>
+        <p>No relations found</p>
+    </div>
+    <ul x-show="relations.length > 0">
+        <template x-for="rel in relations" :key="rel.parent + rel.child">
+            <li class="py-2 border-b border-gray-100" x-text="rel.parent + ' → ' + rel.child + ' (' + rel.type + ')'"></li>
+        </template>
+    </ul>
+</div>
+
+<!-- Migrations -->
+<div class="card">
+    <div class="card-header">
+        <h2>🗄️ Migrations</h2>
+    </div>
+    <div class="flex gap-2 flex-wrap">
+        <button class="btn btn-primary" @click="runMigrations()">▶️ Run Migrations</button>
+        <button class="btn btn-danger" @click="resetMigrations()">🔄 Reset</button>
+    </div>
+</div>
+{{end}}

@@ -1,0 +1,20 @@
+{{define "navbar"}}
+<div class="header flex justify-between items-center mb-6 flex-wrap gap-3">
+    <h1 class="text-2xl font-bold text-gray-800" x-text="pageTitle">📊 Dashboard</h1>
+    <div class="flex items-center gap-3 flex-wrap">
+        <span class="text-sm text-gray-500" x-text="mode === 'developer' ? '🛠️ Developer Mode' : '🌐 Production Mode'"></span>
+        <div class="mode-toggle flex gap-1 bg-gray-200 p-1 rounded-lg">
+            <button :class="mode === 'developer' ? 'active bg-indigo-600 text-white' : 'bg-transparent text-gray-600'" 
+                    @click="setMode('developer')" 
+                    class="px-4 py-1 rounded-lg font-medium transition text-sm">
+                🛠️ Dev
+            </button>
+            <button :class="mode === 'production' ? 'active bg-indigo-600 text-white' : 'bg-transparent text-gray-600'" 
+                    @click="setMode('production')" 
+                    class="px-4 py-1 rounded-lg font-medium transition text-sm">
+                🌐 Prod
+            </button>
+        </div>
+    </div>
+</div>
+{{end}}

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="{{.Locale}}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} | SALE - NATS ERP</title>
+    
+    <link rel="stylesheet" href="/static/css/tailwind/tailwind.min.css">
+    <link rel="stylesheet" href="/static/fonts/fontawesome/css/all.min.css">
+    <link rel="stylesheet" href="/static/css/app.css">
+    
+    <script src="/static/js/htmx/htmx.min.js"></script>
+    <script src="/static/js/alpine/alpine.min.js"></script>
+    <script src="/static/js/app.js"></script>
+</head>
+<body>
+    <div class="min-h-screen bg-gray-100">
+        {{template "navbar" .}}
+        
+        <div class="flex">
+            {{template "sidebar" .}}
+            
+            <main class="flex-1 p-6 ml-64">
+                <div class="bg-white rounded-lg shadow p-6">
+                    {{template "content" .}}
+                </div>
+            </main>
+        </div>
+        
+        {{template "footer" .}}
+    </div>
+</body>
+</html>

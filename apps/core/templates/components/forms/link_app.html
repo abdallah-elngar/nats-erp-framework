@@ -1,0 +1,61 @@
+{{define "modal_link_app"}}
+<div class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" 
+     x-show="showLinkApp" 
+     @click.away="showLinkApp = false"
+     x-cloak>
+    <div class="modal-content bg-white rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <button class="close-btn float-right bg-none border-none text-2xl cursor-pointer text-gray-400 hover:text-gray-600" @click="showLinkApp = false">✕</button>
+        <h2 class="text-xl font-bold text-gray-800 mb-4">🔗 Link Applications</h2>
+        
+        <form @submit.prevent="executeLinkApp()">
+            <div class="form-group mb-4">
+                <label class="form-label block text-sm font-medium text-gray-700 mb-1">Parent App *</label>
+                <select x-model="linkApp.parent" class="form-control w-full px-3 py-2 border border-gray-300 rounded-lg" required>
+                    <option value="">Select parent app</option>
+                    <template x-for="app in apps" :key="app.name">
+                        <option :value="app.name" x-text="app.name"></option>
+                    </template>
+                </select>
+                <small class="form-hint text-xs text-gray-500 mt-1">The main application that owns the relationship</small>
+            </div>
+            
+            <div class="form-group mb-4">
+                <label class="form-label block text-sm font-medium text-gray-700 mb-1">Child App *</label>
+                <select x-model="linkApp.child" class="form-control w-full px-3 py-2 border border-gray-300 rounded-lg" required>
+                    <option value="">Select child app</option>
+                    <template x-for="app in apps" :key="app.name">
+                        <option :value="app.name" x-text="app.name"></option>
+                    </template>
+                </select>
+                <small class="form-hint text-xs text-gray-500 mt-1">The application that is linked to the parent</small>
+            </div>
+            
+            <div class="form-group mb-4">
+                <label class="form-label block text-sm font-medium text-gray-700 mb-1">Relation Type *</label>
+                <select x-model="linkApp.type" class="form-control w-full px-3 py-2 border border-gray-300 rounded-lg" required>
+                    <option value="one-to-one">One-to-One</option>
+                    <option value="one-to-many">One-to-Many</option>
+                    <option value="many-to-many">Many-to-Many</option>
+                </select>
+                <small class="form-hint text-xs text-gray-500 mt-1">How the two applications are related to each other</small>
+            </div>
+            
+            <div class="form-group mb-4" x-show="linkApp.type === 'one-to-many' || linkApp.type === 'many-to-many'">
+                <label class="form-label block text-sm font-medium text-gray-700 mb-1">Foreign Key Field</label>
+                <input type="text" x-model="linkApp.foreignKey" 
+                       class="form-control w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                       placeholder="e.g., parent_id, app_id">
+                <small class="form-hint text-xs text-gray-500 mt-1">The field that will be used as foreign key</small>
+            </div>
+            
+            <div class="modal-actions flex justify-end gap-2 mt-6 pt-4 border-t border-gray-200">
+                <button type="button" class="btn btn-secondary px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition" @click="showLinkApp = false">Cancel</button>
+                <button type="submit" class="btn btn-primary px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition" :disabled="linking">
+                    <span x-show="!linking">🔗 Link Apps</span>
+                    <span x-show="linking">⏳ Linking...</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{{end}}

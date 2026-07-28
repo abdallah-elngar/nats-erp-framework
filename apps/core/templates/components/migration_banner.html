@@ -1,0 +1,9 @@
+{{define "migration_banner"}}
+<div class="migration-banner" x-show="pendingMigration">
+    <div>
+        <span class="icon">⚠️</span>
+        <span class="message">Database changes detected! Run migration to apply changes.</span>
+    </div>
+    <button class="btn" @click="runMigrations()">▶️ Run Migration</button>
+</div>
+{{end}}

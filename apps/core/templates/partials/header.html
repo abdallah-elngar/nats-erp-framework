@@ -1,0 +1,12 @@
+{{define "header"}}
+<div class="header">
+    <h1 x-text="pageTitle">📊 Dashboard</h1>
+    <div class="flex items-center gap-3 flex-wrap">
+        <span class="text-sm text-gray-500" x-text="mode === 'developer' ? '🛠️ Developer Mode' : '🌐 Production Mode'"></span>
+        <div class="mode-toggle">
+            <button :class="mode === 'developer' ? 'active' : ''" @click="setMode('developer')">🛠️ Dev</button>
+            <button :class="mode === 'production' ? 'active' : ''" @click="setMode('production')">🌐 Prod</button>
+        </div>
+    </div>
+</div>
+{{end}}

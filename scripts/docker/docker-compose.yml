@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: nats-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: erp_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: nats-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  app:
+    build: .
+    container_name: nats-app
+    ports:
+      - "8080:8080"
+    environment:
+      APP_ENV: development
+      DB_DRIVER: postgres
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: admin
+      DB_NAME: erp_db
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: super-secret-jwt-key
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./storage:/app/storage
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:

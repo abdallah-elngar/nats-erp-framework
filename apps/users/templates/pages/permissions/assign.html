@@ -1,0 +1,122 @@
+{{define "content"}}
+<div x-data="assignPermissions()">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">🔑 Assign Permissions</h1>
+        <button class="btn btn-primary" @click="savePermissions()">
+            <i class="fas fa-save mr-2"></i>Save Changes
+        </button>
+    </div>
+    
+    <div class="mb-6">
+        <div class="form-group">
+            <label class="form-label">Select Role</label>
+            <select class="form-control" x-model="selectedRole" @change="loadPermissions()">
+                <option value="">Select a role</option>
+                <template x-for="role in roles" :key="role.id">
+                    <option :value="role.id" x-text="role.display_name"></option>
+                </template>
+            </select>
+        </div>
+    </div>
+    
+    <div x-show="selectedRole" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+        <h3 class="text-lg font-semibold mb-4" x-text="'Permissions for: ' + getRoleName()"></h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <template x-for="group in permissionGroups" :key="group.name">
+                <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                    <h4 class="font-semibold text-gray-700 dark:text-gray-300 mb-3" x-text="group.display_name"></h4>
+                    <div class="space-y-2">
+                        <template x-for="perm in group.permissions" :key="perm.id">
+                            <label class="flex items-center gap-2 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 p-1 rounded">
+                                <input type="checkbox" class="form-checkbox" x-model="selectedPermissions" :value="perm.id">
+                                <span class="text-sm text-gray-600 dark:text-gray-400" x-text="perm.display_name"></span>
+                            </label>
+                        </template>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+</div>
+
+<script>
+function assignPermissions() {
+    return {
+        roles: [],
+        selectedRole: '',
+        selectedPermissions: [],
+        permissionGroups: [],
+        loading: false,
+        
+        init() {
+            this.loadRoles();
+        },
+        
+        loadRoles() {
+            fetch('/api/roles')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        this.roles = data.data;
+                    }
+                })
+                .catch(() => {});
+        },
+        
+        loadPermissions() {
+            if (!this.selectedRole) return;
+            this.loading = true;
+            
+            // تحميل الصلاحيات للدور المحدد
+            Promise.all([
+                fetch('/api/permissions/groups').then(res => res.json()),
+                fetch(`/api/roles/${this.selectedRole}/permissions`).then(res => res.json())
+            ])
+            .then(([groupsData, permissionsData]) => {
+                this.loading = false;
+                if (groupsData.success) {
+                    this.permissionGroups = groupsData.data;
+                }
+                if (permissionsData.success) {
+                    this.selectedPermissions = permissionsData.data.map(p => p.id);
+                }
+            })
+            .catch(() => {
+                this.loading = false;
+                showNotification('Error', 'Failed to load permissions', 'danger');
+            });
+        },
+        
+        getRoleName() {
+            const role = this.roles.find(r => r.id === parseInt(this.selectedRole));
+            return role ? role.display_name : '';
+        },
+        
+        savePermissions() {
+            if (!this.selectedRole) return;
+            this.loading = true;
+            
+            fetch(`/api/roles/${this.selectedRole}/permissions`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ permissions: this.selectedPermissions })
+            })
+            .then(res => res.json())
+            .then(data => {
+                this.loading = false;
+                if (data.success) {
+                    showNotification('Success', 'Permissions assigned successfully!', 'success');
+                } else {
+                    showNotification('Error', data.error || 'Failed to assign permissions', 'danger');
+                }
+            })
+            .catch(() => {
+                this.loading = false;
+                showNotification('Error', 'Network error. Please try again.', 'danger');
+            });
+        }
+    };
+}
+</script>
+{{end}}

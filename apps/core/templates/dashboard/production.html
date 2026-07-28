@@ -1,0 +1,117 @@
+{{ extends "layouts/admin" }}
+
+{{ define "title" }}🌐 لوحة التحكم الرئيسية{{ end }}
+
+{{ define "content" }}
+<div class="space-y-6">
+    <!-- Welcome Section -->
+    <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-6 text-white">
+        <h1 class="text-2xl font-bold">👋 مرحباً بعودتك!</h1>
+        <p class="opacity-90 mt-1">هذه هي لوحة التحكم الرئيسية للنظام</p>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+            <div class="flex items-center gap-4">
+                <div class="bg-blue-50 p-3 rounded-xl text-blue-500">
+                    <i class="fas fa-users text-2xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500 mb-1">المستخدمين</p>
+                    <p class="text-2xl font-bold text-gray-800" x-text="stats.users || '0'">0</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+            <div class="flex items-center gap-4">
+                <div class="bg-green-50 p-3 rounded-xl text-green-500">
+                    <i class="fas fa-file-alt text-2xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500 mb-1">السجلات</p>
+                    <p class="text-2xl font-bold text-gray-800" x-text="stats.records || '0'">0</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+            <div class="flex items-center gap-4">
+                <div class="bg-amber-50 p-3 rounded-xl text-amber-500">
+                    <i class="fas fa-box text-2xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500 mb-1">المنتجات</p>
+                    <p class="text-2xl font-bold text-gray-800" x-text="stats.products || '0'">0</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+            <div class="flex items-center gap-4">
+                <div class="bg-purple-50 p-3 rounded-xl text-purple-500">
+                    <i class="fas fa-chart-line text-2xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500 mb-1">المبيعات</p>
+                    <p class="text-2xl font-bold text-gray-800" x-text="stats.sales || '0'">0</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h3 class="text-lg font-bold text-gray-800 mb-4">
+            <i class="fas fa-clock text-indigo-500 me-2"></i>آخر النشاطات
+        </h3>
+        <div class="space-y-3">
+            <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg" x-show="activities.length > 0" x-for="activity in activities">
+                <div class="w-2 h-2 rounded-full" :class="{
+                    'bg-green-500': activity.type === 'success',
+                    'bg-blue-500': activity.type === 'info',
+                    'bg-amber-500': activity.type === 'warning'
+                }"></div>
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-gray-800" x-text="activity.message"></p>
+                    <p class="text-xs text-gray-500" x-text="activity.time"></p>
+                </div>
+            </div>
+            <div x-show="activities.length === 0" class="text-center py-8 text-gray-400">
+                <i class="fas fa-inbox text-4xl mb-3 block"></i>
+                <p>لا توجد نشاطات حديثة</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function productionDashboard() {
+    return {
+        stats: { users: 0, records: 0, products: 0, sales: 0 },
+        activities: [],
+        
+        init() {
+            this.loadStats();
+            this.loadActivities();
+        },
+        
+        loadStats() {
+            fetch('/api/admin/stats')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) this.stats = data.data;
+                })
+                .catch(() => {});
+        },
+        
+        loadActivities() {
+            fetch('/api/admin/activities')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) this.activities = data.data;
+                })
+                .catch(() => {});
+        }
+    };
+}
+</script>
+{{ end }}

@@ -1,0 +1,94 @@
+{{ define "dashboard/apps" }}
+<div>
+    <!-- Header -->
+    <div class="flex justify-between items-center flex-wrap gap-4 pb-4 mb-6 border-b border-gray-200">
+        <h2 class="text-xl font-bold text-gray-800">
+            <i class="fas fa-th text-indigo-500 me-2"></i>إدارة التطبيقات
+        </h2>
+        <div class="flex gap-2">
+            <button class="btn btn-primary" @click="openCreateApp()">
+                <i class="fas fa-plus me-1"></i> تطبيق جديد
+            </button>
+            <button class="btn btn-secondary" @click="loadApps()">
+                <i class="fas fa-sync-alt me-1"></i> تحديث
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+            <p class="text-sm text-gray-500">إجمالي التطبيقات</p>
+            <p class="text-2xl font-bold text-gray-800" x-text="apps.length">0</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+            <p class="text-sm text-gray-500">النماذج</p>
+            <p class="text-2xl font-bold text-gray-800" x-text="totalModels">0</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+            <p class="text-sm text-gray-500">العلاقات</p>
+            <p class="text-2xl font-bold text-gray-800" x-text="relations.length">0</p>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+            <p class="text-sm text-gray-500">هجرات معلقة</p>
+            <p class="text-2xl font-bold text-yellow-600" x-text="pendingMigrations || '0'">0</p>
+        </div>
+    </div>
+
+    <!-- Apps Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">التطبيق</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">الوصف</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">النماذج</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">الحالة</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    <template x-for="app in apps" :key="app.name">
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="px-4 py-3 font-medium" x-text="app.name"></td>
+                            <td class="px-4 py-3 text-sm text-gray-600" x-text="app.description || 'لا يوجد وصف'"></td>
+                            <td class="px-4 py-3 text-sm" x-text="app.models"></td>
+                            <td class="px-4 py-3">
+                                <span class="badge" :class="app.status === 'active' ? 'badge-success' : 'badge-warning'" 
+                                      x-text="app.status === 'active' ? 'نشط' : 'غير نشط'"></span>
+                            </td>
+                            <td class="px-4 py-3">
+                                <div class="flex gap-1">
+                                    <button class="btn btn-primary btn-sm" @click="viewApp(app.name)" title="عرض">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-warning btn-sm" @click="openEditApp(app.name)" title="تعديل">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-success btn-sm" @click="openLinkApp(app.name)" title="ربط">
+                                        <i class="fas fa-link"></i>
+                                    </button>
+                                    <button class="btn btn-danger btn-sm" @click="deleteApp(app.name)" title="حذف" 
+                                            x-show="app.name !== 'core' && app.name !== 'users'">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    </template>
+                    <tr x-show="apps.length === 0">
+                        <td colspan="5" class="px-4 py-8 text-center text-gray-400">
+                            <i class="fas fa-inbox text-4xl mb-3 block"></i>
+                            <p>لا توجد تطبيقات</p>
+                            <button class="btn btn-primary btn-sm mt-2" @click="openCreateApp()">
+                                <i class="fas fa-plus me-1"></i> إنشاء تطبيق
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{{ end }}

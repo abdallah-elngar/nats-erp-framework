@@ -1,0 +1,92 @@
+{{define "developer"}}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>NATS ERP - Developer Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/alpinejs@3.13.5" defer></script>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f0f2f5; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h1 { color: #1a202c; }
+        .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin: 20px 0; }
+        .stat { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center; }
+        .stat .number { font-size: 28px; font-weight: bold; color: #4f46e5; }
+        .stat .label { font-size: 14px; color: #718096; }
+    </style>
+</head>
+<body>
+    <div x-data="dashboardApp()">
+        <div class="container">
+            <h1>🚀 NATS ERP - Developer Dashboard</h1>
+            
+            <div class="stats">
+                <div class="stat">
+                    <div class="number" x-text="stats.apps">0</div>
+                    <div class="label">📦 Apps</div>
+                </div>
+                <div class="stat">
+                    <div class="number" x-text="stats.models">0</div>
+                    <div class="label">📊 Models</div>
+                </div>
+                <div class="stat">
+                    <div class="number" x-text="stats.users">0</div>
+                    <div class="label">👤 Users</div>
+                </div>
+                <div class="stat">
+                    <div class="number" x-text="stats.relations">0</div>
+                    <div class="label">🔗 Relations</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📦 Applications</h2>
+                <div x-show="apps.length === 0">
+                    <p>No applications found</p>
+                </div>
+                <ul x-show="apps.length > 0">
+                    <template x-for="app in apps" :key="app.name">
+                        <li x-text="app.name"></li>
+                    </template>
+                </ul>
+                <button class="btn btn-primary" @click="loadApps()">🔄 Refresh</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function dashboardApp() {
+            return {
+                stats: { apps: 0, models: 0, users: 0, relations: 0 },
+                apps: [],
+                
+                init() {
+                    console.log('🚀 Dashboard initialized');
+                    this.loadStats();
+                    this.loadApps();
+                },
+                
+                loadStats() {
+                    fetch('/api/admin/stats')
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) this.stats = data.data;
+                        })
+                        .catch(err => console.error('Stats error:', err));
+                },
+                
+                loadApps() {
+                    fetch('/api/admin/apps')
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) this.apps = data.data;
+                        })
+                        .catch(err => console.error('Apps error:', err));
+                }
+            };
+        }
+    </script>
+</body>
+</html>
+{{end}}

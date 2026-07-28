@@ -1,0 +1,272 @@
+# ============================================
+# Permissions Configuration
+# ============================================
+
+# إعدادات الصلاحيات الافتراضية
+defaults:
+  # الصلاحيات الافتراضية للمستخدمين الجدد
+  user:
+    enabled: true
+    permissions:
+      - users.view
+      - roles.view
+      - system.settings
+      
+  # الصلاحيات الافتراضية للمديرين
+  admin:
+    enabled: true
+    permissions:
+      - "*"  # كل الصلاحيات
+
+# تعريف الصلاحيات
+permissions:
+  # صلاحيات المستخدمين
+  users:
+    view:
+      name: "users.view"
+      description: "View users"
+      resource: "users"
+      action: "view"
+      
+    create:
+      name: "users.create"
+      description: "Create users"
+      resource: "users"
+      action: "create"
+      
+    edit:
+      name: "users.edit"
+      description: "Edit users"
+      resource: "users"
+      action: "edit"
+      
+    delete:
+      name: "users.delete"
+      description: "Delete users"
+      resource: "users"
+      action: "delete"
+      
+  # صلاحيات الأدوار
+  roles:
+    view:
+      name: "roles.view"
+      description: "View roles"
+      resource: "roles"
+      action: "view"
+      
+    create:
+      name: "roles.create"
+      description: "Create roles"
+      resource: "roles"
+      action: "create"
+      
+    edit:
+      name: "roles.edit"
+      description: "Edit roles"
+      resource: "roles"
+      action: "edit"
+      
+    delete:
+      name: "roles.delete"
+      description: "Delete roles"
+      resource: "roles"
+      action: "delete"
+      
+  # صلاحيات الصلاحيات
+  permissions:
+    view:
+      name: "permissions.view"
+      description: "View permissions"
+      resource: "permissions"
+      action: "view"
+      
+    create:
+      name: "permissions.create"
+      description: "Create permissions"
+      resource: "permissions"
+      action: "create"
+      
+    edit:
+      name: "permissions.edit"
+      description: "Edit permissions"
+      resource: "permissions"
+      action: "edit"
+      
+    delete:
+      name: "permissions.delete"
+      description: "Delete permissions"
+      resource: "permissions"
+      action: "delete"
+      
+    assign:
+      name: "permissions.assign"
+      description: "Assign permissions"
+      resource: "permissions"
+      action: "assign"
+      
+  # صلاحيات التطبيقات
+  apps:
+    view:
+      name: "apps.view"
+      description: "View applications"
+      resource: "apps"
+      action: "view"
+      
+    create:
+      name: "apps.create"
+      description: "Create applications"
+      resource: "apps"
+      action: "create"
+      
+    edit:
+      name: "apps.edit"
+      description: "Edit applications"
+      resource: "apps"
+      action: "edit"
+      
+    delete:
+      name: "apps.delete"
+      description: "Delete applications"
+      resource: "apps"
+      action: "delete"
+      
+  # صلاحيات النظام
+  system:
+    settings:
+      name: "system.settings"
+      description: "System settings"
+      resource: "system"
+      action: "settings"
+      
+    apps:
+      name: "system.apps"
+      description: "Manage system apps"
+      resource: "system"
+      action: "apps"
+      
+    backup:
+      name: "system.backup"
+      description: "System backup"
+      resource: "system"
+      action: "backup"
+      
+    restore:
+      name: "system.restore"
+      description: "System restore"
+      resource: "system"
+      action: "restore"
+      
+    logs:
+      name: "system.logs"
+      description: "View system logs"
+      resource: "system"
+      action: "logs"
+      
+    maintenance:
+      name: "system.maintenance"
+      description: "System maintenance"
+      resource: "system"
+      action: "maintenance"
+
+# الأدوار الافتراضية
+roles:
+  # المدير
+  admin:
+    display_name: "Administrator"
+    description: "Full system access"
+    permissions: ["*"]
+    is_system: true
+    is_default: false
+    
+  # المدير العام
+  manager:
+    display_name: "Manager"
+    description: "Manage users and content"
+    permissions:
+      - users.view
+      - users.create
+      - users.edit
+      - users.delete
+      - roles.view
+      - roles.create
+      - roles.edit
+      - roles.delete
+      - permissions.view
+      - permissions.assign
+      - apps.view
+      - apps.create
+      - apps.edit
+      - system.settings
+      - system.logs
+    is_system: true
+    is_default: false
+    
+  # مستخدم عادي
+  user:
+    display_name: "User"
+    description: "Basic user access"
+    permissions:
+      - users.view
+      - roles.view
+      - system.settings
+    is_system: true
+    is_default: true
+    
+  # ضيف
+  guest:
+    display_name: "Guest"
+    description: "Read-only access"
+    permissions:
+      - users.view
+    is_system: true
+    is_default: false
+
+# تعريف مجموعات الصلاحيات
+groups:
+  users:
+    display_name: "Users"
+    description: "Manage users"
+    permissions:
+      - users.view
+      - users.create
+      - users.edit
+      - users.delete
+      
+  roles:
+    display_name: "Roles"
+    description: "Manage roles"
+    permissions:
+      - roles.view
+      - roles.create
+      - roles.edit
+      - roles.delete
+      
+  permissions:
+    display_name: "Permissions"
+    description: "Manage permissions"
+    permissions:
+      - permissions.view
+      - permissions.create
+      - permissions.edit
+      - permissions.delete
+      - permissions.assign
+      
+  apps:
+    display_name: "Applications"
+    description: "Manage applications"
+    permissions:
+      - apps.view
+      - apps.create
+      - apps.edit
+      - apps.delete
+      
+  system:
+    display_name: "System"
+    description: "Manage system"
+    permissions:
+      - system.settings
+      - system.apps
+      - system.backup
+      - system.restore
+      - system.logs
+      - system.maintenance

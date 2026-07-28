@@ -1,0 +1,63 @@
+# ============================================
+# Cache Configuration
+# ============================================
+
+# التخزين المؤقت الافتراضي
+default: memory
+
+# إعدادات التخزين المؤقت
+connections:
+  # التخزين في الذاكرة (للتطوير)
+  memory:
+    driver: memory
+    prefix: "nats:"
+    
+  # Redis (للإنتاج)
+  redis:
+    driver: redis
+    host: localhost
+    port: 6379
+    password: ""
+    database: 0
+    prefix: "nats:"
+    pool_size: 10
+    min_idle_conns: 5
+    dial_timeout: 5s
+    read_timeout: 3s
+    write_timeout: 3s
+    pool_timeout: 4s
+    idle_timeout: 300s
+    max_retries: 3
+    min_retry_backoff: 8ms
+    max_retry_backoff: 512ms
+
+# إعدادات التخزين المؤقت المتقدمة
+options:
+  # مدة انتهاء الصلاحية الافتراضية (بالثواني)
+  default_ttl: 3600  # ساعة واحدة
+  
+  # مدة انتهاء الصلاحية لأنواع محددة
+  ttl:
+    session: 7200      # ساعتان
+    cache: 3600        # ساعة واحدة
+    view: 300          # 5 دقائق
+    query: 600         # 10 دقائق
+    api: 1800          # 30 دقيقة
+    
+  # مفاتيح خاصة لأنواع محددة
+  prefixes:
+    session: "session:"
+    cache: "cache:"
+    view: "view:"
+    query: "query:"
+    api: "api:"
+
+# إعدادات التخزين المؤقت للتطبيقات
+apps:
+  core:
+    enabled: true
+    ttl: 3600
+    
+  users:
+    enabled: true
+    ttl: 1800
