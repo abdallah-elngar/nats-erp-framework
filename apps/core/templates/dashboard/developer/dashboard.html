@@ -6,22 +6,19 @@
 {{ define "page_title" }}🛠️ Developer Dashboard{{ end }}
 
 {{ define "sidebar" }}
-    <a class="sidebar-link" href="/admin/developer" @click.prevent="currentView = 'dashboard'" :class="currentView === 'dashboard' ? 'active' : ''">
+    <a class="sidebar-link active" href="/admin/developer">
         <i class="fas fa-terminal"></i> Developer
     </a>
-    <a class="sidebar-link" href="/admin/apps" @click.prevent="currentView = 'apps'" :class="currentView === 'apps' ? 'active' : ''">
+    <a class="sidebar-link" @click="currentView = 'apps'" :class="currentView === 'apps' ? 'active' : ''">
         <i class="fas fa-th-large"></i> Applications
     </a>
-    <a class="sidebar-link" href="/admin/relations" @click.prevent="currentView = 'relations'" :class="currentView === 'relations' ? 'active' : ''">
+    <a class="sidebar-link" @click="currentView = 'relations'" :class="currentView === 'relations' ? 'active' : ''">
         <i class="fas fa-link"></i> Relations
     </a>
-    <a class="sidebar-link" href="/admin/migrations" @click.prevent="currentView = 'migrations'" :class="currentView === 'migrations' ? 'active' : ''">
+    <a class="sidebar-link" @click="currentView = 'migrations'" :class="currentView === 'migrations' ? 'active' : ''">
         <i class="fas fa-database"></i> Migrations
     </a>
-    <a class="sidebar-link" href="/admin/users" @click.prevent="currentView = 'users'" :class="currentView === 'users' ? 'active' : ''">
-        <i class="fas fa-users"></i> Users
-    </a>
-    <a class="sidebar-link" href="/admin/settings" @click.prevent="currentView = 'settings'" :class="currentView === 'settings' ? 'active' : ''">
+    <a class="sidebar-link" @click="currentView = 'settings'" :class="currentView === 'settings' ? 'active' : ''">
         <i class="fas fa-cog"></i> Settings
     </a>
 {{ end }}
@@ -45,35 +42,15 @@
         </div>
     </div>
 
-    <!-- ============================================ -->
-    <!-- Dashboard View -->
-    <!-- ============================================ -->
-    <div x-show="currentView === 'dashboard'">
-        <div class="card">
-            <div class="card-header">
-                <h2>🚀 Welcome to NATS Framework</h2>
-            </div>
-            <div style="color: #4a5568; line-height: 1.8;">
-                <p>You are in <strong x-text="mode === 'developer' ? 'Developer Mode' : 'Production Mode'"></strong></p>
-                <p style="margin-top: 8px;">📦 <span x-text="stats.apps || 0"></span> applications installed</p>
-                <p>📊 <span x-text="stats.models || 0"></span> models defined</p>
-                <p>👤 <span x-text="stats.users || 0"></span> users registered</p>
-                <p>🔗 <span x-text="stats.relations || 0"></span> relations between apps</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- ============================================ -->
     <!-- Applications View -->
-    <!-- ============================================ -->
     <div x-show="currentView === 'apps'">
         <div class="card">
             <div class="card-header">
                 <h2>📦 Applications</h2>
                 <div class="flex gap-2 flex-wrap">
-                    <a href="/admin/apps/create" class="btn btn-primary developer-only" @click.prevent="openCreateApp()">
+                    <button class="btn btn-primary developer-only" @click="openCreateApp()">
                         <i class="fas fa-plus"></i> Create App
-                    </a>
+                    </button>
                     <button class="btn btn-secondary" @click="loadApps()">
                         <i class="fas fa-sync"></i> Refresh
                     </button>
@@ -118,11 +95,70 @@
                 </table>
             </div>
         </div>
+
+        <!-- Model Details -->
+        <div class="card" x-show="selectedApp">
+            <div class="card-header">
+                <h2 x-text="'📊 Models: ' + selectedApp"></h2>
+                <button class="btn btn-primary btn-sm developer-only" @click="openAddField()">
+                    <i class="fas fa-plus"></i> Add Field
+                </button>
+            </div>
+            
+            <div class="migration-banner" x-show="pendingMigration">
+                <span>⚠️ <span class="font-medium">Database changes detected!</span> Run migration to apply.</span>
+                <button class="btn btn-warning btn-sm" @click="runMigrations()">
+                    <i class="fas fa-play"></i> Run Migration
+                </button>
+            </div>
+            
+            <div x-show="selectedFields.length === 0" class="empty-state">
+                <div class="icon">📊</div>
+                <p>No models found</p>
+            </div>
+            
+            <div x-show="selectedFields.length > 0">
+                <template x-for="model in selectedFields" :key="model.model">
+                    <div class="mb-4">
+                        <h3 class="font-semibold text-gray-700 mb-2" x-text="'📄 ' + model.model"></h3>
+                        <div class="overflow-x-auto">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Field Name</th>
+                                        <th>Type</th>
+                                        <th>Required</th>
+                                        <th>Unique</th>
+                                        <th class="developer-only">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template x-for="field in model.fields" :key="field.name">
+                                        <tr>
+                                            <td x-text="field.name"></td>
+                                            <td><span class="badge badge-primary" x-text="field.type"></span></td>
+                                            <td x-text="field.required ? '✅' : '❌'"></td>
+                                            <td x-text="field.unique ? '✅' : '❌'"></td>
+                                            <td class="developer-only">
+                                                <button class="btn btn-warning btn-sm" @click="editField(model.model, field.name)">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-danger btn-sm" @click="deleteField(model.model, field.name)">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
     </div>
 
-    <!-- ============================================ -->
     <!-- Relations View -->
-    <!-- ============================================ -->
     <div x-show="currentView === 'relations'">
         <div class="card">
             <div class="card-header">
@@ -166,9 +202,7 @@
         </div>
     </div>
 
-    <!-- ============================================ -->
     <!-- Migrations View -->
-    <!-- ============================================ -->
     <div x-show="currentView === 'migrations'">
         <div class="card">
             <div class="card-header">
@@ -190,27 +224,7 @@
         </div>
     </div>
 
-    <!-- ============================================ -->
-    <!-- Users View -->
-    <!-- ============================================ -->
-    <div x-show="currentView === 'users'">
-        <div class="card">
-            <div class="card-header">
-                <h2>👤 Users</h2>
-                <button class="btn btn-primary developer-only" @click="openCreateUser()">
-                    <i class="fas fa-plus"></i> Add User
-                </button>
-            </div>
-            <div class="empty-state">
-                <div class="icon">👤</div>
-                <p>User management coming soon</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- ============================================ -->
     <!-- Settings View -->
-    <!-- ============================================ -->
     <div x-show="currentView === 'settings'">
         <div class="card">
             <div class="card-header">
@@ -223,10 +237,7 @@
         </div>
     </div>
 
-    <!-- ============================================ -->
     <!-- Modals -->
-    <!-- ============================================ -->
-
     <!-- Modal: Create App -->
     <div class="modal" x-show="showCreateApp" @click.away="showCreateApp = false" :class="showCreateApp ? 'active' : ''">
         <div class="modal-content">
@@ -293,6 +304,85 @@
         </div>
     </div>
 
+    <!-- Modal: Add Field -->
+    <div class="modal" x-show="showAddField" @click.away="showAddField = false" :class="showAddField ? 'active' : ''">
+        <div class="modal-content">
+            <button class="close-btn" @click="showAddField = false">✕</button>
+            <h2 class="text-xl font-bold text-gray-800 mb-4">✏️ Add New Field</h2>
+            
+            <form @submit.prevent="executeAddField()">
+                <div class="form-group">
+                    <label class="form-label">Field Name *</label>
+                    <input type="text" x-model="newField.name" class="form-control" placeholder="e.g., email, phone" required>
+                    <div class="form-hint">Use lowercase letters and underscores</div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Field Type *</label>
+                    <select x-model="newField.type" class="form-control" required>
+                        <option value="string">String</option>
+                        <option value="text">Text</option>
+                        <option value="int">Integer</option>
+                        <option value="float">Float</option>
+                        <option value="bool">Boolean</option>
+                        <option value="date">Date</option>
+                        <option value="datetime">DateTime</option>
+                        <option value="time">Time</option>
+                        <option value="json">JSON</option>
+                        <option value="relation">Relation</option>
+                    </select>
+                </div>
+                
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Required</label>
+                        <select x-model="newField.required" class="form-control">
+                            <option value="false">No</option>
+                            <option value="true">Yes</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Unique</label>
+                        <select x-model="newField.unique" class="form-control">
+                            <option value="false">No</option>
+                            <option value="true">Yes</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group" x-show="newField.type === 'relation'">
+                    <label class="form-label">Related Model</label>
+                    <input type="text" x-model="newField.relatedModel" class="form-control" placeholder="e.g., User, Department">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Default Value</label>
+                    <input type="text" x-model="newField.default" class="form-control" placeholder="e.g., 0, '', true">
+                </div>
+                
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 my-4 rounded" x-show="newField.name">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <span class="text-yellow-500 text-xl">⚠️</span>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-yellow-700 font-medium">Migration Required!</p>
+                            <p class="text-sm text-yellow-600">Run migration after saving.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" @click="showAddField = false">Cancel</button>
+                    <button type="submit" class="btn btn-primary" :disabled="addingField">
+                        <span x-show="!addingField"><i class="fas fa-save"></i> Save Field</span>
+                        <span x-show="addingField"><i class="fas fa-spinner fa-spin"></i> Saving...</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Modal: Link Apps -->
     <div class="modal" x-show="showLinkApp" @click.away="showLinkApp = false" :class="showLinkApp ? 'active' : ''">
         <div class="modal-content">
@@ -345,74 +435,27 @@
         </div>
     </div>
 
-    <!-- Modal: Create User -->
-    <div class="modal" x-show="showCreateUser" @click.away="showCreateUser = false" :class="showCreateUser ? 'active' : ''">
-        <div class="modal-content">
-            <button class="close-btn" @click="showCreateUser = false">✕</button>
-            <h2 class="text-xl font-bold text-gray-800 mb-4">👤 Create New User</h2>
-            
-            <form @submit.prevent="executeCreateUser()">
-                <div class="form-group">
-                    <label class="form-label">Username *</label>
-                    <input type="text" x-model="newUser.username" class="form-control" placeholder="e.g., john_doe" required>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Email *</label>
-                    <input type="email" x-model="newUser.email" class="form-control" placeholder="e.g., john@example.com" required>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Full Name</label>
-                    <input type="text" x-model="newUser.fullName" class="form-control" placeholder="e.g., John Doe">
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Password *</label>
-                    <input type="password" x-model="newUser.password" class="form-control" placeholder="Enter password" required>
-                </div>
-                
-                <div class="form-group">
-                    <label class="form-label">Role</label>
-                    <select x-model="newUser.role" class="form-control">
-                        <option value="admin">Admin</option>
-                        <option value="manager">Manager</option>
-                        <option value="user">User</option>
-                    </select>
-                </div>
-                
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary" @click="showCreateUser = false">Cancel</button>
-                    <button type="submit" class="btn btn-primary" :disabled="creatingUser">
-                        <span x-show="!creatingUser"><i class="fas fa-user-plus"></i> Create User</span>
-                        <span x-show="creatingUser"><i class="fas fa-spinner fa-spin"></i> Creating...</span>
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <!-- Toast Container -->
     <div id="toast-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 8px;"></div>
 </div>
 
 <script>
-// ✅ أولاً: تعريف الدالة (قبل أي حاجة)
 function developerDashboard() {
     return {
         mode: 'developer',
-        currentView: 'dashboard',
+        currentView: 'apps',
         loading: false,
         creating: false,
         linking: false,
-        creatingUser: false,
         addingField: false,
         pendingMigration: false,
-        stats: { apps: 0, models: 0, users: 0, relations: 0 },
+        
         apps: [],
         selectedApp: null,
         selectedFields: [],
         relations: [],
+        stats: { apps: 0, models: 0, users: 0, relations: 0 },
+        
         showCreateApp: false,
         newApp: {
             name: '',
@@ -421,6 +464,17 @@ function developerDashboard() {
             models: [{name: '', fields: ''}],
             crud: 'yes'
         },
+        
+        showAddField: false,
+        newField: {
+            name: '',
+            type: 'string',
+            required: 'false',
+            unique: 'false',
+            default: '',
+            relatedModel: ''
+        },
+        
         showLinkApp: false,
         linkApp: {
             parent: '',
@@ -428,66 +482,28 @@ function developerDashboard() {
             type: 'one-to-many',
             foreignKey: ''
         },
-        showCreateUser: false,
-        newUser: {
-            username: '',
-            email: '',
-            fullName: '',
-            password: '',
-            role: 'user'
-        },
-
-        // ============================================
-        // INIT
-        // ============================================
+        
         init() {
             const savedMode = localStorage.getItem('nats_mode');
-            if (savedMode) {
-                this.mode = savedMode;
-            }
-
-            const path = window.location.pathname;
-            if (path.includes('/admin/apps')) {
-                this.currentView = 'apps';
-            } else if (path.includes('/admin/relations')) {
-                this.currentView = 'relations';
-            } else if (path.includes('/admin/migrations')) {
-                this.currentView = 'migrations';
-            } else if (path.includes('/admin/users')) {
-                this.currentView = 'users';
-            } else if (path.includes('/admin/settings')) {
-                this.currentView = 'settings';
-            }
-
+            if (savedMode) this.mode = savedMode;
             this.loadApps();
             this.loadRelations();
             this.loadStats();
-            window.developerDashboardInstance = this;
         },
-
-        // ============================================
-        // MODE
-        // ============================================
+        
         setMode(mode) {
             this.mode = mode;
             localStorage.setItem('nats_mode', mode);
             this.showToast('Switched to ' + (mode === 'developer' ? 'Developer' : 'Production') + ' Mode', 'info');
         },
-
-        // ============================================
-        // LOAD DATA
-        // ============================================
+        
         loadStats() {
             fetch('/api/admin/stats')
                 .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        this.stats = data.data;
-                    }
-                })
+                .then(data => { if (data.success) this.stats = data.data; })
                 .catch(() => {});
         },
-
+        
         loadApps() {
             this.loading = true;
             fetch('/api/admin/apps')
@@ -504,7 +520,7 @@ function developerDashboard() {
                     this.showToast('Failed to load apps', 'error');
                 });
         },
-
+        
         loadRelations() {
             fetch('/api/admin/relations')
                 .then(res => res.json())
@@ -516,22 +532,75 @@ function developerDashboard() {
                 })
                 .catch(() => {});
         },
-
-        // ============================================
-        // DELETE APP
-        // ============================================
+        
+        viewApp(appName) {
+            this.selectedApp = appName;
+            fetch('/api/admin/apps/' + appName + '/models')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        this.selectedFields = data.data;
+                        this.stats.models = data.data.length;
+                    } else {
+                        this.selectedFields = [];
+                        this.showToast('No models found for ' + appName, 'info');
+                    }
+                })
+                .catch(() => {
+                    this.showToast('Failed to load models', 'error');
+                });
+        },
+        
+        openCreateApp() {
+            if (this.mode !== 'developer') {
+                this.showToast('Please switch to Developer Mode', 'error');
+                return;
+            }
+            this.newApp = { name: '', description: '', parent: 'core', models: [{name: '', fields: ''}], crud: 'yes' };
+            this.showCreateApp = true;
+        },
+        
+        executeCreateApp() {
+            if (!this.newApp.name) {
+                this.showToast('Please enter application name', 'error');
+                return;
+            }
+            this.creating = true;
+            fetch('/api/admin/apps', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(this.newApp)
+            })
+            .then(res => res.json())
+            .then(data => {
+                this.creating = false;
+                if (data.success) {
+                    this.showCreateApp = false;
+                    this.loadApps();
+                    this.showToast('✅ Application "' + this.newApp.name + '" created!', 'success');
+                } else {
+                    this.showToast('❌ Error: ' + (data.error || 'Unknown error'), 'error');
+                }
+            })
+            .catch(() => {
+                this.creating = false;
+                this.showToast('❌ Network error', 'error');
+            });
+        },
+        
         deleteApp(appName) {
             if (this.mode !== 'developer') {
                 this.showToast('Please switch to Developer Mode', 'error');
                 return;
             }
-            if (!confirm('Are you sure you want to delete app: "' + appName + '"?')) return;
-
+            if (!confirm('Delete app "' + appName + '"?')) return;
             fetch('/api/admin/apps/' + appName, { method: 'DELETE' })
                 .then(res => res.json())
                 .then(data => {
                     if (data.success) {
                         this.loadApps();
+                        this.selectedApp = null;
+                        this.selectedFields = [];
                         this.showToast('✅ App "' + appName + '" deleted', 'success');
                     } else {
                         this.showToast('❌ Error: ' + (data.error || 'Unknown error'), 'error');
@@ -541,10 +610,100 @@ function developerDashboard() {
                     this.showToast('❌ Network error', 'error');
                 });
         },
-
-        // ============================================
-        // LINK APPS
-        // ============================================
+        
+        openAddField() {
+            if (this.mode !== 'developer') {
+                this.showToast('Please switch to Developer Mode', 'error');
+                return;
+            }
+            if (!this.selectedApp) {
+                this.showToast('Please select an app first', 'error');
+                return;
+            }
+            this.newField = { name: '', type: 'string', required: 'false', unique: 'false', default: '', relatedModel: '' };
+            this.showAddField = true;
+        },
+        
+        executeAddField() {
+            if (!this.newField.name) {
+                this.showToast('Please enter a field name', 'error');
+                return;
+            }
+            this.addingField = true;
+            fetch('/api/admin/apps/' + this.selectedApp + '/models/Default/fields', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: this.newField.name,
+                    type: this.newField.type,
+                    required: this.newField.required === 'true',
+                    unique: this.newField.unique === 'true',
+                    default: this.newField.default,
+                    relatedModel: this.newField.relatedModel
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                this.addingField = false;
+                if (data.success) {
+                    this.showAddField = false;
+                    this.showToast('✅ Field "' + this.newField.name + '" added!', 'success');
+                    this.viewApp(this.selectedApp);
+                    this.pendingMigration = true;
+                    this.showMigrationNotification();
+                } else {
+                    this.showToast('❌ Error: ' + data.error, 'error');
+                }
+            })
+            .catch(() => {
+                this.addingField = false;
+                this.showToast('❌ Network error', 'error');
+            });
+        },
+        
+        deleteField(modelName, fieldName) {
+            if (this.mode !== 'developer') {
+                this.showToast('Please switch to Developer Mode', 'error');
+                return;
+            }
+            if (!confirm('Delete field "' + fieldName + '" from "' + modelName + '"?')) return;
+            fetch('/api/admin/apps/' + this.selectedApp + '/models/' + modelName + '/fields/' + fieldName, {
+                method: 'DELETE'
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    this.showToast('✅ Field "' + fieldName + '" deleted!', 'success');
+                    this.viewApp(this.selectedApp);
+                    this.pendingMigration = true;
+                } else {
+                    this.showToast('❌ Error: ' + data.error, 'error');
+                }
+            })
+            .catch(() => {
+                this.showToast('❌ Network error', 'error');
+            });
+        },
+        
+        editField(modelName, fieldName) {
+            if (this.mode !== 'developer') {
+                this.showToast('Please switch to Developer Mode', 'error');
+                return;
+            }
+            const newType = prompt('Enter new type for "' + fieldName + '":\n(string, int, float, bool, date, datetime, time, text, json)');
+            if (!newType) return;
+            this.showToast('✏️ Field "' + fieldName + '" updated to "' + newType + '"', 'info');
+            this.pendingMigration = true;
+        },
+        
+        openEditApp(appName) {
+            if (this.mode !== 'developer') {
+                this.showToast('Please switch to Developer Mode', 'error');
+                return;
+            }
+            this.showToast('✏️ Edit app: ' + appName + ' (coming soon)', 'info');
+        },
+        
         openLinkApp() {
             if (this.mode !== 'developer') {
                 this.showToast('Please switch to Developer Mode', 'error');
@@ -553,7 +712,7 @@ function developerDashboard() {
             this.linkApp = { parent: '', child: '', type: 'one-to-many', foreignKey: '' };
             this.showLinkApp = true;
         },
-
+        
         executeLinkApp() {
             if (!this.linkApp.parent || !this.linkApp.child) {
                 this.showToast('Please select both apps', 'error');
@@ -563,7 +722,6 @@ function developerDashboard() {
                 this.showToast('Parent and child cannot be the same', 'error');
                 return;
             }
-
             this.linking = true;
             fetch('/api/admin/relations', {
                 method: 'POST',
@@ -586,14 +744,13 @@ function developerDashboard() {
                 this.showToast('❌ Network error', 'error');
             });
         },
-
+        
         deleteRelation(rel) {
             if (this.mode !== 'developer') {
                 this.showToast('Please switch to Developer Mode', 'error');
                 return;
             }
             if (!confirm('Delete relation between "' + rel.parent + '" and "' + rel.child + '"?')) return;
-
             fetch('/api/admin/relations', {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
@@ -612,55 +769,7 @@ function developerDashboard() {
                 this.showToast('❌ Network error', 'error');
             });
         },
-
-        // ============================================
-        // CREATE USER
-        // ============================================
-        openCreateUser() {
-            if (this.mode !== 'developer') {
-                this.showToast('Please switch to Developer Mode', 'error');
-                return;
-            }
-            this.newUser = { username: '', email: '', fullName: '', password: '', role: 'user' };
-            this.showCreateUser = true;
-        },
-
-        executeCreateUser() {
-            if (!this.newUser.username || !this.newUser.email || !this.newUser.password) {
-                this.showToast('Please fill in all required fields', 'error');
-                return;
-            }
-            if (this.newUser.password.length < 8) {
-                this.showToast('Password must be at least 8 characters', 'error');
-                return;
-            }
-
-            this.creatingUser = true;
-            fetch('/api/admin/users', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(this.newUser)
-            })
-            .then(res => res.json())
-            .then(data => {
-                this.creatingUser = false;
-                if (data.success) {
-                    this.showCreateUser = false;
-                    this.loadStats();
-                    this.showToast('✅ User "' + this.newUser.username + '" created!', 'success');
-                } else {
-                    this.showToast('❌ Error: ' + (data.error || 'Unknown error'), 'error');
-                }
-            })
-            .catch(() => {
-                this.creatingUser = false;
-                this.showToast('❌ Network error', 'error');
-            });
-        },
-
-        // ============================================
-        // MIGRATIONS
-        // ============================================
+        
         runMigrations() {
             if (this.mode !== 'developer') {
                 this.showToast('Please switch to Developer Mode', 'error');
@@ -668,12 +777,12 @@ function developerDashboard() {
             }
             this.showToast('⏳ Running migrations...', 'info');
             this.pendingMigration = false;
-
             fetch('/api/admin/migrations/run', { method: 'POST' })
                 .then(res => res.json())
                 .then(data => {
                     if (data.success) {
                         this.showToast('✅ Migrations completed!', 'success');
+                        this.viewApp(this.selectedApp);
                     } else {
                         this.showToast('❌ Error: ' + (data.error || 'Unknown error'), 'error');
                     }
@@ -682,14 +791,13 @@ function developerDashboard() {
                     this.showToast('❌ Network error', 'error');
                 });
         },
-
+        
         resetMigrations() {
             if (this.mode !== 'developer') {
                 this.showToast('Please switch to Developer Mode', 'error');
                 return;
             }
-            if (!confirm('⚠️ This will reset all migrations. Are you sure?')) return;
-
+            if (!confirm('⚠️ Reset all migrations?')) return;
             fetch('/api/admin/migrations/reset', { method: 'POST' })
                 .then(res => res.json())
                 .then(data => {
@@ -703,24 +811,39 @@ function developerDashboard() {
                     this.showToast('❌ Network error', 'error');
                 });
         },
-
-        // ============================================
-        // TOAST NOTIFICATIONS
-        // ============================================
+        
+        showMigrationNotification() {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = 'toast toast-warning';
+            toast.style.background = '#fef3c7';
+            toast.style.color = '#78350f';
+            toast.style.border = '1px solid #fcd34d';
+            toast.innerHTML = `
+                <div style="display:flex;align-items:center;gap:12px;justify-content:space-between;width:100%;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span style="font-size:20px;">⚠️</span>
+                        <span><strong>Database changes detected!</strong> Run migration to apply.</span>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove(); window.developerDashboardInstance?.runMigrations();" 
+                            style="background:#d97706;border:none;padding:6px 16px;border-radius:6px;cursor:pointer;color:white;font-weight:500;">
+                        ▶️ Run Migration
+                    </button>
+                </div>
+            `;
+            container.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(() => toast.remove(), 300); }, 15000);
+        },
+        
         showToast(message, type) {
             const container = document.getElementById('toast-container');
             if (!container) return;
-
             const toast = document.createElement('div');
             toast.className = 'toast toast-' + type;
             toast.textContent = message;
             container.appendChild(toast);
-
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                toast.style.transition = 'opacity 0.3s';
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
+            setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(() => toast.remove(), 300); }, 3000);
         }
     };
 }

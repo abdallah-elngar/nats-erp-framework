@@ -439,6 +439,26 @@ func (e *Engine) extractLayoutName(content string) string {
 	return ""
 }
 
+// pkg/template/engine.go
+
+// RenderFile يعرض قالباً من مسار محدد
+func (e *Engine) RenderFile(w io.Writer, path string, data interface{}) error {
+	// قراءة الملف مباشرة
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("failed to read template file %s: %w", path, err)
+	}
+
+	// إنشاء قالب من المحتوى
+	tmpl, err := template.New(filepath.Base(path)).Funcs(e.funcMap).Parse(string(content))
+	if err != nil {
+		return fmt.Errorf("failed to parse template: %w", err)
+	}
+
+	// تنفيذ القالب
+	return tmpl.Execute(w, data)
+}
+
 // inheritTemplate يدمج كتل القالب الابن داخل التخطيط الأب
 func (e *Engine) inheritTemplate(content, layout string) string {
 	// 1. استخراج الكتل من القالب الابن

@@ -1,0 +1,92 @@
+{{/* apps/core/templates/production/dashboard.html */}}
+{{ extends "layouts/admin" }}
+
+{{ define "title" }}Dashboard{{ end }}
+
+{{ define "page_title" }}📊 Dashboard{{ end }}
+
+{{ define "sidebar" }}
+    <a class="sidebar-link active" href="/admin/production">
+        <i class="fas fa-home"></i> Dashboard
+    </a>
+    <a class="sidebar-link" href="#">
+        <i class="fas fa-chart-bar"></i> Reports
+    </a>
+    <a class="sidebar-link" href="#">
+        <i class="fas fa-user"></i> Profile
+    </a>
+{{ end }}
+
+{{ define "content" }}
+<div x-data="productionDashboard()" class="space-y-6">
+    <!-- Welcome -->
+    <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-6 text-white">
+        <h1 class="text-2xl font-bold">👋 Welcome back, {{ .User.FullName | default "User" }}!</h1>
+        <p class="mt-2 opacity-90">Here's what's happening with your ERP system today.</p>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="card">
+            <div class="text-sm text-gray-500">📦 Total Products</div>
+            <div class="text-2xl font-bold" x-text="stats.products || 0"></div>
+        </div>
+        <div class="card">
+            <div class="text-sm text-gray-500">👥 Customers</div>
+            <div class="text-2xl font-bold" x-text="stats.customers || 0"></div>
+        </div>
+        <div class="card">
+            <div class="text-sm text-gray-500">📊 Orders</div>
+            <div class="text-2xl font-bold" x-text="stats.orders || 0"></div>
+        </div>
+        <div class="card">
+            <div class="text-sm text-gray-500">💰 Revenue</div>
+            <div class="text-2xl font-bold" x-text="stats.revenue || '$0'"></div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="card">
+        <h2 class="text-lg font-semibold mb-4">🕐 Recent Activity</h2>
+        <div class="space-y-3">
+            <template x-for="activity in activities" :key="activity.id">
+                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <span class="text-2xl" x-text="activity.icon"></span>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium" x-text="activity.message"></p>
+                        <p class="text-xs text-gray-400" x-text="activity.time"></p>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+</div>
+
+<script>
+function productionDashboard() {
+    return {
+        stats: { products: 0, customers: 0, orders: 0, revenue: '$0' },
+        activities: [
+            { id: 1, icon: '📦', message: 'New product added: Laptop Pro', time: '2 minutes ago' },
+            { id: 2, icon: '👤', message: 'New customer registered: Ahmed Ali', time: '5 minutes ago' },
+            { id: 3, icon: '📊', message: 'Order #1234 completed', time: '15 minutes ago' },
+        ],
+        
+        init() {
+            this.loadStats();
+        },
+        
+        loadStats() {
+            fetch('/api/admin/stats')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        this.stats = data.data;
+                    }
+                })
+                .catch(() => {});
+        }
+    };
+}
+</script>
+{{ end }}

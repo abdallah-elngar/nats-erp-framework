@@ -9,11 +9,11 @@ import (
 	"github.com/nats-framework/nats/pkg/template"
 )
 
-// ✅ تغيير Mux إلى chi.Router (واجهة)
+// Router يمثل الموجه
 type Router struct {
-	chi.Router // ✅ استخدام الواجهة بدلاً من المؤشر
-	engine     *template.Engine
-	config     RouterConfig
+	chi.Router
+	engine *template.Engine
+	config RouterConfig
 }
 
 // RouterConfig إعدادات الموجه
@@ -69,24 +69,28 @@ func (r *Router) healthHandler(w http.ResponseWriter, req *http.Request) {
 	w.Write([]byte(`{"status":"ok","message":"NATS Framework is running"}`))
 }
 
-// ✅ Route ينشئ مساراً فرعياً (مصحح)
+// ✅ ChiRouter يعيد الـ chi.Router الأصلي (للتوافق مع الكود القديم)
+func (r *Router) ChiRouter() *chi.Mux {
+	if mux, ok := r.Router.(*chi.Mux); ok {
+		return mux
+	}
+	return nil
+}
+
+// Route ينشئ مساراً فرعياً
 func (r *Router) Route(pattern string, fn func(r *Router)) *Router {
-	// ✅ إنشاء Router فرعي من chi.Router
 	subRouter := &Router{
 		Router: chi.NewRouter(),
 		engine: r.engine,
 		config: r.config,
 	}
 
-	// ✅ استدعاء الدالة مع الـ Router الفرعي
 	fn(subRouter)
-
-	// ✅ تركيب الـ Router الفرعي
 	r.Router.Mount(pattern, subRouter.Router)
 	return subRouter
 }
 
-// ✅ Group ينشئ مجموعة مسارات (مصحح)
+// Group ينشئ مجموعة مسارات
 func (r *Router) Group(fn func(r *Router)) *Router {
 	group := &Router{
 		Router: chi.NewRouter(),
@@ -98,56 +102,56 @@ func (r *Router) Group(fn func(r *Router)) *Router {
 	return group
 }
 
-// ✅ With يضيف ميدلوير للمجموعة (مصحح)
+// With يضيف ميدلوير للمجموعة
 func (r *Router) With(middlewares ...func(http.Handler) http.Handler) *Router {
 	return &Router{
-		Router: r.Router.With(middlewares...), // ✅ يعيد chi.Router
+		Router: r.Router.With(middlewares...),
 		engine: r.engine,
 		config: r.config,
 	}
 }
 
-// ✅ Get يضيف مسار GET
+// Get يضيف مسار GET
 func (r *Router) Get(pattern string, handler http.HandlerFunc) {
 	r.Router.Get(pattern, handler)
 }
 
-// ✅ Post يضيف مسار POST
+// Post يضيف مسار POST
 func (r *Router) Post(pattern string, handler http.HandlerFunc) {
 	r.Router.Post(pattern, handler)
 }
 
-// ✅ Put يضيف مسار PUT
+// Put يضيف مسار PUT
 func (r *Router) Put(pattern string, handler http.HandlerFunc) {
 	r.Router.Put(pattern, handler)
 }
 
-// ✅ Delete يضيف مسار DELETE
+// Delete يضيف مسار DELETE
 func (r *Router) Delete(pattern string, handler http.HandlerFunc) {
 	r.Router.Delete(pattern, handler)
 }
 
-// ✅ Patch يضيف مسار PATCH
+// Patch يضيف مسار PATCH
 func (r *Router) Patch(pattern string, handler http.HandlerFunc) {
 	r.Router.Patch(pattern, handler)
 }
 
-// ✅ Options يضيف مسار OPTIONS
+// Options يضيف مسار OPTIONS
 func (r *Router) Options(pattern string, handler http.HandlerFunc) {
 	r.Router.Options(pattern, handler)
 }
 
-// ✅ Head يضيف مسار HEAD
+// Head يضيف مسار HEAD
 func (r *Router) Head(pattern string, handler http.HandlerFunc) {
 	r.Router.Head(pattern, handler)
 }
 
-// ✅ Use يضيف ميدلوير
+// Use يضيف ميدلوير
 func (r *Router) Use(middlewares ...func(http.Handler) http.Handler) {
 	r.Router.Use(middlewares...)
 }
 
-// ✅ Mount يثبت مسارات فرعية
+// Mount يثبت مسارات فرعية
 func (r *Router) Mount(pattern string, handler http.Handler) {
 	r.Router.Mount(pattern, handler)
 }

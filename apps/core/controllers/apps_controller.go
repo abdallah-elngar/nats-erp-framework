@@ -6,23 +6,51 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 
+	"github.com/nats-framework/nats/pkg/response"
 	"github.com/nats-framework/nats/pkg/template"
 )
 
+// ============================================
+// تعريف الأنواع
+// ============================================
+
+// ModelInput يمثل بيانات النموذج من الطلب
+type ModelInput struct {
+	Name   string `json:"name"`
+	Fields string `json:"fields"`
+}
+
 // AppsController متحكم إدارة التطبيقات
 type AppsController struct {
-	BaseController
+	engine *template.Engine
 }
 
 // NewAppsController ينشئ متحكم إدارة التطبيقات
 func NewAppsController(engine *template.Engine) *AppsController {
 	return &AppsController{
-		BaseController: BaseController{engine: engine},
+		engine: engine,
 	}
 }
+
+// ============================================
+// دوال مساعدة للاستجابات
+// ============================================
+
+func (c *AppsController) success(w http.ResponseWriter, data interface{}) {
+	response.Success(w, data)
+}
+
+func (c *AppsController) error(w http.ResponseWriter, status int, message string) {
+	response.Error(w, status, message)
+}
+
+// ============================================
+// 1. قائمة التطبيقات
+// ============================================
 
 // ListApps يعيد قائمة التطبيقات
 func (c *AppsController) ListApps(w http.ResponseWriter, r *http.Request) {
@@ -30,7 +58,7 @@ func (c *AppsController) ListApps(w http.ResponseWriter, r *http.Request) {
 
 	entries, err := os.ReadDir("apps")
 	if err != nil {
-		c.Success(w, apps)
+		c.success(w, apps)
 		return
 	}
 
@@ -60,7 +88,7 @@ func (c *AppsController) ListApps(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	c.Success(w, apps)
+	c.success(w, apps)
 }
 
 // GetAppModels يعيد نماذج تطبيق معين
@@ -68,7 +96,7 @@ func (c *AppsController) GetAppModels(w http.ResponseWriter, r *http.Request) {
 	appName := chi.URLParam(r, "app")
 
 	if appName == "" {
-		c.Error(w, http.StatusBadRequest, "App name is required")
+		c.error(w, http.StatusBadRequest, "App name is required")
 		return
 	}
 
@@ -85,7 +113,7 @@ func (c *AppsController) GetAppModels(w http.ResponseWriter, r *http.Request) {
 				{"name": "updated_at", "type": "time.Time", "required": false, "unique": false},
 			},
 		})
-		c.Success(w, fields)
+		c.success(w, fields)
 		return
 	}
 
@@ -186,8 +214,12 @@ func (c *AppsController) GetAppModels(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	c.Success(w, fields)
+	c.success(w, fields)
 }
+
+// ============================================
+// 2. إنشاء تطبيق (كامل)
+// ============================================
 
 // CreateApp ينشئ تطبيقاً جديداً
 func (c *AppsController) CreateApp(w http.ResponseWriter, r *http.Request) {
@@ -203,21 +235,31 @@ func (c *AppsController) CreateApp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		c.Error(w, http.StatusBadRequest, "Invalid request: "+err.Error())
+		c.error(w, http.StatusBadRequest, "Invalid request: "+err.Error())
 		return
 	}
 
 	if req.Name == "" {
-		c.Error(w, http.StatusBadRequest, "Application name is required")
+		c.error(w, http.StatusBadRequest, "Application name is required")
 		return
+	}
+
+	// ✅ تحويل req.Models إلى ModelInput للاستخدام في الدوال
+	models := make([]ModelInput, len(req.Models))
+	for i, m := range req.Models {
+		models[i] = ModelInput{
+			Name:   m.Name,
+			Fields: m.Fields,
+		}
 	}
 
 	appPath := filepath.Join("apps", req.Name)
 	if err := os.MkdirAll(appPath, 0755); err != nil {
-		c.Error(w, http.StatusInternalServerError, "Failed to create app directory: "+err.Error())
+		c.error(w, http.StatusInternalServerError, "Failed to create app directory: "+err.Error())
 		return
 	}
 
+	// إنشاء جميع المجلدات الفرعية
 	subdirs := []string{
 		"controllers", "models", "dto", "migrations/gorm", "migrations/sql",
 		"templates/layouts", "templates/pages", "routes", "middleware",
@@ -226,15 +268,18 @@ func (c *AppsController) CreateApp(w http.ResponseWriter, r *http.Request) {
 
 	for _, subdir := range subdirs {
 		if err := os.MkdirAll(filepath.Join(appPath, subdir), 0755); err != nil {
-			c.Error(w, http.StatusInternalServerError, "Failed to create subdirectory: "+err.Error())
+			c.error(w, http.StatusInternalServerError, "Failed to create subdirectory: "+err.Error())
 			return
 		}
 	}
 
-	// إنشاء ملف app.go
+	// ============================================
+	// ✅ 1. app.go
+	// ============================================
 	appContent := `package ` + req.Name + `
 
 import (
+    "github.com/go-chi/chi/v5"
     "github.com/nats-framework/nats/pkg/engine"
     "github.com/nats-framework/nats/apps/` + req.Name + `/routes"
 )
@@ -256,7 +301,7 @@ func (a *App) Name() string {
 }
 
 func (a *App) Register() error {
-    routes.RegisterRoutes(a.engine.GetRouter())
+    routes.RegisterRoutes(a.engine.GetChiRouter())
     return nil
 }
 
@@ -264,67 +309,362 @@ func (a *App) Boot() error {
     return nil
 }
 `
-
 	if err := os.WriteFile(filepath.Join(appPath, "app.go"), []byte(appContent), 0644); err != nil {
-		c.Error(w, http.StatusInternalServerError, "Failed to create app.go: "+err.Error())
+		c.error(w, http.StatusInternalServerError, "Failed to create app.go: "+err.Error())
 		return
 	}
 
-	// إنشاء النماذج
-	for _, model := range req.Models {
+	// ============================================
+	// ✅ 2. register.go
+	// ============================================
+	registerContent := `package ` + req.Name + `
+
+import (
+    "github.com/nats-framework/nats/pkg/engine"
+)
+
+func Register(app *engine.Engine) error {
+    appInstance := NewApp(app)
+    if err := appInstance.Register(); err != nil {
+        return err
+    }
+    if err := appInstance.Boot(); err != nil {
+        return err
+    }
+    return nil
+}
+`
+	if err := os.WriteFile(filepath.Join(appPath, "register.go"), []byte(registerContent), 0644); err != nil {
+		c.error(w, http.StatusInternalServerError, "Failed to create register.go: "+err.Error())
+		return
+	}
+
+	// ============================================
+	// ✅ 3. النماذج (Models)
+	// ============================================
+	for _, model := range models {
 		if model.Name == "" {
 			continue
 		}
-
 		modelName := strings.Title(model.Name)
 		fields := parseFields(model.Fields)
 
 		modelContent := generateModelContent(req.Name, modelName, fields)
 		modelPath := filepath.Join(appPath, "models", strings.ToLower(modelName)+".go")
 		if err := os.WriteFile(modelPath, []byte(modelContent), 0644); err != nil {
-			c.Error(w, http.StatusInternalServerError, "Failed to create model: "+err.Error())
+			c.error(w, http.StatusInternalServerError, "Failed to create model: "+err.Error())
 			return
 		}
 	}
 
-	c.Success(w, map[string]interface{}{
+	// ============================================
+	// ✅ 4. DTOs
+	// ============================================
+	for _, model := range models {
+		if model.Name == "" {
+			continue
+		}
+		modelName := strings.Title(model.Name)
+		fields := parseFields(model.Fields)
+
+		dtoContent := generateDTOContent(req.Name, modelName, fields)
+		dtoPath := filepath.Join(appPath, "dto", strings.ToLower(modelName)+"_dto.go")
+		if err := os.WriteFile(dtoPath, []byte(dtoContent), 0644); err != nil {
+			c.error(w, http.StatusInternalServerError, "Failed to create DTO: "+err.Error())
+			return
+		}
+	}
+
+	// ============================================
+	// ✅ 5. الهجرات (Migrations)
+	// ============================================
+	for _, model := range models {
+		if model.Name == "" {
+			continue
+		}
+		modelName := strings.Title(model.Name)
+		modelFields := parseFields(model.Fields)
+
+		timestamp := time.Now().Format("20060102150405")
+		tableName := strings.ToLower(modelName) + "s"
+
+		// GORM Migration
+		gormContent := `package migrations
+
+import (
+    "gorm.io/gorm"
+
+    "github.com/nats-framework/nats/apps/` + req.Name + `/models"
+)
+
+func Up_` + timestamp + `(db *gorm.DB) error {
+    return db.AutoMigrate(&models.` + modelName + `{})
+}
+
+func Down_` + timestamp + `(db *gorm.DB) error {
+    return db.Migrator().DropTable("` + tableName + `")
+}
+`
+		gormPath := filepath.Join(appPath, "migrations/gorm", timestamp+"_create_"+tableName+"_table.go")
+		if err := os.WriteFile(gormPath, []byte(gormContent), 0644); err != nil {
+			c.error(w, http.StatusInternalServerError, "Failed to create GORM migration: "+err.Error())
+			return
+		}
+
+		// SQL Migration
+		var columns []string
+		columns = append(columns, "    id BIGSERIAL PRIMARY KEY")
+		for _, f := range modelFields {
+			if f["type"] == "relation" {
+				columns = append(columns, "    "+strings.ToLower(f["name"])+"_id BIGINT")
+				continue
+			}
+			columns = append(columns, "    "+strings.ToLower(f["name"])+" "+getSQLType(f["type"]))
+		}
+		columns = append(columns, "    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+		columns = append(columns, "    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+		columns = append(columns, "    deleted_at TIMESTAMP")
+
+		sqlContent := `-- name: create_` + tableName + `_table
+-- id: ` + timestamp + `
+-- created: ` + time.Now().Format("2006-01-02 15:04:05") + `
+
+-- up:
+CREATE TABLE IF NOT EXISTS ` + tableName + ` (
+` + strings.Join(columns, ",\n") + `
+);
+
+-- down:
+DROP TABLE IF EXISTS ` + tableName + `;
+`
+		sqlPath := filepath.Join(appPath, "migrations/sql", timestamp+"_create_"+tableName+"_table.sql")
+		if err := os.WriteFile(sqlPath, []byte(sqlContent), 0644); err != nil {
+			c.error(w, http.StatusInternalServerError, "Failed to create SQL migration: "+err.Error())
+			return
+		}
+	}
+
+	// ============================================
+	// ✅ 6. المتحكمات (Controllers)
+	// ============================================
+	for _, model := range models {
+		if model.Name == "" {
+			continue
+		}
+		modelName := strings.Title(model.Name)
+		lowerName := strings.ToLower(modelName)
+
+		controllerContent := generateControllerContent(req.Name, modelName)
+		controllerPath := filepath.Join(appPath, "controllers", lowerName+"_controller.go")
+		if err := os.WriteFile(controllerPath, []byte(controllerContent), 0644); err != nil {
+			c.error(w, http.StatusInternalServerError, "Failed to create controller: "+err.Error())
+			return
+		}
+	}
+
+	// ============================================
+	// ✅ 7. router.go - استخدام generateRouterContent
+	// ============================================
+	routerContent := generateRouterContent(req.Name, models)
+	if err := os.WriteFile(filepath.Join(appPath, "routes", "router.go"), []byte(routerContent), 0644); err != nil {
+		c.error(w, http.StatusInternalServerError, "Failed to create router: "+err.Error())
+		return
+	}
+
+	// ============================================
+	// ✅ 8. Services
+	// ============================================
+	for _, model := range models {
+		if model.Name == "" {
+			continue
+		}
+		modelName := strings.Title(model.Name)
+
+		serviceContent := generateServiceContent(req.Name, modelName)
+		servicePath := filepath.Join(appPath, "services", strings.ToLower(modelName)+"_service.go")
+		if err := os.WriteFile(servicePath, []byte(serviceContent), 0644); err != nil {
+			c.error(w, http.StatusInternalServerError, "Failed to create service: "+err.Error())
+			return
+		}
+	}
+
+	// ============================================
+	// ✅ 9. Repository
+	// ============================================
+	for _, model := range models {
+		if model.Name == "" {
+			continue
+		}
+		modelName := strings.Title(model.Name)
+
+		repoContent := generateRepositoryContent(req.Name, modelName)
+		repoPath := filepath.Join(appPath, "repository", strings.ToLower(modelName)+"_repository.go")
+		if err := os.WriteFile(repoPath, []byte(repoContent), 0644); err != nil {
+			c.error(w, http.StatusInternalServerError, "Failed to create repository: "+err.Error())
+			return
+		}
+	}
+
+	// ============================================
+	// ✅ 10. Permissions
+	// ============================================
+	permissionsContent := generatePermissionsContent(req.Name, models)
+	if err := os.WriteFile(filepath.Join(appPath, "permissions", "permissions.go"), []byte(permissionsContent), 0644); err != nil {
+		c.error(w, http.StatusInternalServerError, "Failed to create permissions: "+err.Error())
+		return
+	}
+
+	// ============================================
+	// ✅ 11. Listeners
+	// ============================================
+	listenersContent := generateListenersContent(req.Name, models)
+	if err := os.WriteFile(filepath.Join(appPath, "listeners", "listeners.go"), []byte(listenersContent), 0644); err != nil {
+		c.error(w, http.StatusInternalServerError, "Failed to create listeners: "+err.Error())
+		return
+	}
+
+	// ============================================
+	// ✅ 12. Hooks
+	// ============================================
+	hooksContent := generateHooksContent(req.Name, models)
+	if err := os.WriteFile(filepath.Join(appPath, "hooks", "hooks.go"), []byte(hooksContent), 0644); err != nil {
+		c.error(w, http.StatusInternalServerError, "Failed to create hooks: "+err.Error())
+		return
+	}
+
+	// ============================================
+	// ✅ 13. Signals
+	// ============================================
+	signalsContent := generateSignalsContent(req.Name, models)
+	if err := os.WriteFile(filepath.Join(appPath, "signals", "signals.go"), []byte(signalsContent), 0644); err != nil {
+		c.error(w, http.StatusInternalServerError, "Failed to create signals: "+err.Error())
+		return
+	}
+
+	// ============================================
+	// ✅ 14. Middleware
+	// ============================================
+	middlewareContent := generateMiddlewareContent(req.Name)
+	if err := os.WriteFile(filepath.Join(appPath, "middleware", "middleware.go"), []byte(middlewareContent), 0644); err != nil {
+		c.error(w, http.StatusInternalServerError, "Failed to create middleware: "+err.Error())
+		return
+	}
+
+	// ============================================
+	// ✅ 15. Templates (القوالب)
+	// ============================================
+	for _, model := range models {
+		if model.Name == "" {
+			continue
+		}
+		modelName := strings.Title(model.Name)
+		lowerName := strings.ToLower(modelName)
+		pluralName := lowerName + "s"
+
+		templatesDir := filepath.Join(appPath, "templates/pages", pluralName)
+		os.MkdirAll(templatesDir, 0755)
+
+		// index.html
+		indexContent := `{{define "content"}}
+<div class="container mx-auto p-4">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold">📦 ` + modelName + `s</h1>
+        <button class="btn btn-primary" hx-get="/` + req.Name + `/` + pluralName + `/create" hx-target="#modal-content" @click="showModal = true">
+            <i class="fas fa-plus mr-2"></i>Add ` + modelName + `
+        </button>
+    </div>
+
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <table class="w-full">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+                {{range .Items}}
+                <tr>
+                    <td class="px-6 py-4">{{.ID}}</td>
+                    <td class="px-6 py-4">{{.Name}}</td>
+                    <td class="px-6 py-4">
+                        <button class="text-blue-600 hover:text-blue-800 mr-2"
+                                hx-get="/` + req.Name + `/` + pluralName + `/{{.ID}}" hx-target="#modal-content" @click="showModal = true">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="text-green-600 hover:text-green-800 mr-2"
+                                hx-get="/` + req.Name + `/` + pluralName + `/{{.ID}}/edit" hx-target="#modal-content" @click="showModal = true">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="text-red-600 hover:text-red-800"
+                                hx-delete="/` + req.Name + `/` + pluralName + `/{{.ID}}" hx-confirm="Are you sure?">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+                {{else}}
+                <tr>
+                    <td colspan="3" class="px-6 py-4 text-center text-gray-500">No ` + lowerName + `s found</td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+</div>
+{{end}}`
+		if err := os.WriteFile(filepath.Join(templatesDir, "index.html"), []byte(indexContent), 0644); err != nil {
+			c.error(w, http.StatusInternalServerError, "Failed to create index template: "+err.Error())
+			return
+		}
+	}
+
+	c.success(w, map[string]interface{}{
 		"message": "Application created successfully",
 		"name":    req.Name,
 		"models":  len(req.Models),
 	})
 }
 
+// ============================================
+// 3. حذف تطبيق
+// ============================================
+
 // DeleteApp يحذف تطبيقاً
 func (c *AppsController) DeleteApp(w http.ResponseWriter, r *http.Request) {
 	appName := chi.URLParam(r, "app")
 
 	if appName == "" {
-		c.Error(w, http.StatusBadRequest, "App name is required")
+		c.error(w, http.StatusBadRequest, "App name is required")
 		return
 	}
 
 	if appName == "core" || appName == "users" {
-		c.Error(w, http.StatusForbidden, "Cannot delete system apps")
+		c.error(w, http.StatusForbidden, "Cannot delete system apps")
 		return
 	}
 
 	appPath := filepath.Join("apps", appName)
 	if err := os.RemoveAll(appPath); err != nil {
-		c.Error(w, http.StatusInternalServerError, "Failed to delete app: "+err.Error())
+		c.error(w, http.StatusInternalServerError, "Failed to delete app: "+err.Error())
 		return
 	}
 
-	c.Success(w, map[string]interface{}{
+	c.success(w, map[string]interface{}{
 		"message": "App deleted successfully",
 	})
 }
+
+// ============================================
+// 4. العلاقات
+// ============================================
 
 // ListRelations يعيد قائمة العلاقات
 func (c *AppsController) ListRelations(w http.ResponseWriter, r *http.Request) {
 	relations := []map[string]interface{}{
 		{"parent": "core", "child": "users", "type": "one-to-many"},
 	}
-	c.Success(w, relations)
+	c.success(w, relations)
 }
 
 // CreateRelation ينشئ علاقة جديدة
@@ -337,21 +677,21 @@ func (c *AppsController) CreateRelation(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		c.Error(w, http.StatusBadRequest, "Invalid request: "+err.Error())
+		c.error(w, http.StatusBadRequest, "Invalid request: "+err.Error())
 		return
 	}
 
 	if req.Parent == "" || req.Child == "" {
-		c.Error(w, http.StatusBadRequest, "Parent and child apps are required")
+		c.error(w, http.StatusBadRequest, "Parent and child apps are required")
 		return
 	}
 
 	if req.Parent == req.Child {
-		c.Error(w, http.StatusBadRequest, "Parent and child cannot be the same")
+		c.error(w, http.StatusBadRequest, "Parent and child cannot be the same")
 		return
 	}
 
-	c.Success(w, map[string]interface{}{
+	c.success(w, map[string]interface{}{
 		"message": "Apps linked successfully",
 		"parent":  req.Parent,
 		"child":   req.Child,
@@ -367,14 +707,18 @@ func (c *AppsController) DeleteRelation(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		c.Error(w, http.StatusBadRequest, "Invalid request: "+err.Error())
+		c.error(w, http.StatusBadRequest, "Invalid request: "+err.Error())
 		return
 	}
 
-	c.Success(w, map[string]interface{}{
+	c.success(w, map[string]interface{}{
 		"message": "Relation deleted successfully",
 	})
 }
+
+// ============================================
+// 5. الحقول
+// ============================================
 
 // AddField يضيف حقل جديد
 func (c *AppsController) AddField(w http.ResponseWriter, r *http.Request) {
@@ -389,16 +733,16 @@ func (c *AppsController) AddField(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		c.Error(w, http.StatusBadRequest, "Invalid request: "+err.Error())
+		c.error(w, http.StatusBadRequest, "Invalid request: "+err.Error())
 		return
 	}
 
 	if appName == "" || modelName == "" || req.Name == "" {
-		c.Error(w, http.StatusBadRequest, "App name, model name, and field name are required")
+		c.error(w, http.StatusBadRequest, "App name, model name, and field name are required")
 		return
 	}
 
-	c.Success(w, map[string]interface{}{
+	c.success(w, map[string]interface{}{
 		"message": "Field added successfully",
 		"app":     appName,
 		"model":   modelName,
@@ -413,17 +757,21 @@ func (c *AppsController) DeleteField(w http.ResponseWriter, r *http.Request) {
 	fieldName := chi.URLParam(r, "field")
 
 	if appName == "" || modelName == "" || fieldName == "" {
-		c.Error(w, http.StatusBadRequest, "App name, model name, and field name are required")
+		c.error(w, http.StatusBadRequest, "App name, model name, and field name are required")
 		return
 	}
 
-	c.Success(w, map[string]interface{}{
+	c.success(w, map[string]interface{}{
 		"message": "Field deleted successfully",
 		"app":     appName,
 		"model":   modelName,
 		"field":   fieldName,
 	})
 }
+
+// ============================================
+// 6. المستخدمين
+// ============================================
 
 // CreateUser ينشئ مستخدم جديد
 func (c *AppsController) CreateUser(w http.ResponseWriter, r *http.Request) {
@@ -436,16 +784,16 @@ func (c *AppsController) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		c.Error(w, http.StatusBadRequest, "Invalid request: "+err.Error())
+		c.error(w, http.StatusBadRequest, "Invalid request: "+err.Error())
 		return
 	}
 
 	if req.Username == "" || req.Email == "" || req.Password == "" {
-		c.Error(w, http.StatusBadRequest, "Username, email, and password are required")
+		c.error(w, http.StatusBadRequest, "Username, email, and password are required")
 		return
 	}
 
-	c.Success(w, map[string]interface{}{
+	c.success(w, map[string]interface{}{
 		"message":  "User created successfully",
 		"username": req.Username,
 		"email":    req.Email,
@@ -453,16 +801,20 @@ func (c *AppsController) CreateUser(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// ============================================
+// 7. الهجرات
+// ============================================
+
 // RunMigrations ينفذ الهجرات
 func (c *AppsController) RunMigrations(w http.ResponseWriter, r *http.Request) {
-	c.Success(w, map[string]interface{}{
+	c.success(w, map[string]interface{}{
 		"message": "Migrations completed successfully",
 	})
 }
 
 // ResetMigrations يعيد تعيين الهجرات
 func (c *AppsController) ResetMigrations(w http.ResponseWriter, r *http.Request) {
-	c.Success(w, map[string]interface{}{
+	c.success(w, map[string]interface{}{
 		"message": "Migrations reset successfully",
 	})
 }
@@ -471,6 +823,7 @@ func (c *AppsController) ResetMigrations(w http.ResponseWriter, r *http.Request)
 // دوال مساعدة
 // ============================================
 
+// parseFields يحلل الحقول من النص
 func parseFields(fieldsStr string) []map[string]string {
 	fields := []map[string]string{}
 	if fieldsStr == "" {
@@ -495,6 +848,11 @@ func parseFields(fieldsStr string) []map[string]string {
 	return fields
 }
 
+// ============================================
+// دوال توليد المحتوى (مستخدمة)
+// ============================================
+
+// generateModelContent يولد محتوى ملف النموذج
 func generateModelContent(appName, modelName string, fields []map[string]string) string {
 	var fieldsStr []string
 	for _, f := range fields {
@@ -524,6 +882,7 @@ func (` + modelName + `) TableName() string {
 `
 }
 
+// getGoType يحول نوع الحقل إلى نوع Go
 func getGoType(fieldType string) string {
 	switch fieldType {
 	case "string":
@@ -540,7 +899,534 @@ func getGoType(fieldType string) string {
 		return "time.Time"
 	case "json":
 		return "json.RawMessage"
+	case "relation":
+		return "uint"
 	default:
 		return "string"
 	}
+}
+
+// getSQLType يحول نوع الحقل إلى نوع SQL
+func getSQLType(fieldType string) string {
+	switch fieldType {
+	case "string":
+		return "VARCHAR(255)"
+	case "text":
+		return "TEXT"
+	case "int":
+		return "INTEGER"
+	case "float":
+		return "DECIMAL(10,2)"
+	case "bool":
+		return "BOOLEAN"
+	case "date":
+		return "DATE"
+	case "datetime":
+		return "TIMESTAMP"
+	case "time":
+		return "TIME"
+	case "json":
+		return "JSONB"
+	case "relation":
+		return "BIGINT"
+	default:
+		return "TEXT"
+	}
+}
+
+// generateDTOContent يولد محتوى DTO
+func generateDTOContent(appName, modelName string, fields []map[string]string) string {
+	var createFields, updateFields, responseFields []string
+	for _, f := range fields {
+		if f["type"] == "relation" {
+			continue
+		}
+		fieldName := strings.Title(f["name"])
+		goType := getGoType(f["type"])
+		jsonName := strings.ToLower(f["name"])
+
+		createFields = append(createFields, "    "+fieldName+" "+goType+" `json:\""+jsonName+"\" validate:\"required\"`")
+		updateFields = append(updateFields, "    "+fieldName+" "+goType+" `json:\""+jsonName+"\"`")
+		responseFields = append(responseFields, "    "+fieldName+" "+goType+" `json:\""+jsonName+"\"`")
+	}
+
+	return `package dto
+
+import "time"
+
+type Create` + modelName + `Request struct {
+` + strings.Join(createFields, "\n") + `
+}
+
+type Update` + modelName + `Request struct {
+` + strings.Join(updateFields, "\n") + `
+}
+
+type ` + modelName + `Response struct {
+    ID        uint      ` + "`json:\"id\"`" + `
+` + strings.Join(responseFields, "\n") + `
+    CreatedAt time.Time ` + "`json:\"created_at\"`" + `
+    UpdatedAt time.Time ` + "`json:\"updated_at\"`" + `
+}
+`
+}
+
+// generateControllerContent يولد محتوى المتحكم
+func generateControllerContent(appName, modelName string) string {
+	return `package controllers
+
+import (
+    "encoding/json"
+    "net/http"
+    "strconv"
+
+    "github.com/go-chi/chi/v5"
+
+    "github.com/nats-framework/nats/apps/` + appName + `/dto"
+    "github.com/nats-framework/nats/apps/` + appName + `/services"
+    "github.com/nats-framework/nats/pkg/response"
+)
+
+// ` + modelName + `Controller متحكم ` + modelName + `
+type ` + modelName + `Controller struct {
+    service *services.` + modelName + `Service
+}
+
+// New` + modelName + `Controller ينشئ متحكم ` + modelName + ` جديد
+func New` + modelName + `Controller() *` + modelName + `Controller {
+    return &` + modelName + `Controller{
+        service: services.New` + modelName + `Service(),
+    }
+}
+
+func (c *` + modelName + `Controller) Index(w http.ResponseWriter, r *http.Request) {
+    items, err := c.service.GetAll()
+    if err != nil {
+        response.Error(w, http.StatusInternalServerError, err.Error())
+        return
+    }
+    response.Success(w, items)
+}
+
+func (c *` + modelName + `Controller) Show(w http.ResponseWriter, r *http.Request) {
+    id, err := strconv.Atoi(chi.URLParam(r, "id"))
+    if err != nil {
+        response.Error(w, http.StatusBadRequest, "Invalid ID")
+        return
+    }
+
+    item, err := c.service.GetByID(uint(id))
+    if err != nil {
+        response.Error(w, http.StatusNotFound, "` + modelName + ` not found")
+        return
+    }
+
+    response.Success(w, item)
+}
+
+func (c *` + modelName + `Controller) Create(w http.ResponseWriter, r *http.Request) {
+    var req dto.Create` + modelName + `Request
+    if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+        response.Error(w, http.StatusBadRequest, "Invalid request")
+        return
+    }
+
+    item, err := c.service.Create(req)
+    if err != nil {
+        response.Error(w, http.StatusBadRequest, err.Error())
+        return
+    }
+
+    response.Success(w, item)
+}
+
+func (c *` + modelName + `Controller) Update(w http.ResponseWriter, r *http.Request) {
+    id, err := strconv.Atoi(chi.URLParam(r, "id"))
+    if err != nil {
+        response.Error(w, http.StatusBadRequest, "Invalid ID")
+        return
+    }
+
+    var req dto.Update` + modelName + `Request
+    if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+        response.Error(w, http.StatusBadRequest, "Invalid request")
+        return
+    }
+
+    item, err := c.service.Update(uint(id), req)
+    if err != nil {
+        response.Error(w, http.StatusBadRequest, err.Error())
+        return
+    }
+
+    response.Success(w, item)
+}
+
+func (c *` + modelName + `Controller) Delete(w http.ResponseWriter, r *http.Request) {
+    id, err := strconv.Atoi(chi.URLParam(r, "id"))
+    if err != nil {
+        response.Error(w, http.StatusBadRequest, "Invalid ID")
+        return
+    }
+
+    if err := c.service.Delete(uint(id)); err != nil {
+        response.Error(w, http.StatusInternalServerError, err.Error())
+        return
+    }
+
+    response.Success(w, map[string]interface{}{"message": "Deleted successfully"})
+}
+`
+}
+
+// ✅ generateRouterContent - مستخدمة في CreateApp (غير unused)
+func generateRouterContent(appName string, models []ModelInput) string {
+	var routes []string
+	for _, model := range models {
+		if model.Name == "" {
+			continue
+		}
+		name := strings.Title(model.Name)
+		pluralName := strings.ToLower(model.Name) + "s"
+
+		routes = append(routes, `    // مسارات `+name+`
+    ctrl := controllers.New`+name+`Controller()
+    r.Get("/`+pluralName+`", ctrl.Index)
+    r.Get("/`+pluralName+`/{id}", ctrl.Show)
+    r.Post("/`+pluralName+`", ctrl.Create)
+    r.Put("/`+pluralName+`/{id}", ctrl.Update)
+    r.Delete("/`+pluralName+`/{id}", ctrl.Delete)`)
+	}
+
+	return `package routes
+
+import (
+    "github.com/go-chi/chi/v5"
+
+    "github.com/nats-framework/nats/apps/` + appName + `/controllers"
+)
+
+func RegisterRoutes(r *chi.Mux) {
+` + strings.Join(routes, "\n\n    ") + `
+}
+`
+}
+
+// generateServiceContent يولد محتوى Service
+func generateServiceContent(appName, modelName string) string {
+	return `package services
+
+import (
+    "errors"
+
+    "github.com/nats-framework/nats/apps/` + appName + `/dto"
+    "github.com/nats-framework/nats/apps/` + appName + `/models"
+    "github.com/nats-framework/nats/apps/` + appName + `/repository"
+)
+
+type ` + modelName + `Service struct {
+    repo *repository.` + modelName + `Repository
+}
+
+func New` + modelName + `Service() *` + modelName + `Service {
+    return &` + modelName + `Service{
+        repo: repository.New` + modelName + `Repository(),
+    }
+}
+
+func (s *` + modelName + `Service) GetAll() ([]models.` + modelName + `, error) {
+    return s.repo.FindAll()
+}
+
+func (s *` + modelName + `Service) GetByID(id uint) (*models.` + modelName + `, error) {
+    return s.repo.FindByID(id)
+}
+
+func (s *` + modelName + `Service) Create(req dto.Create` + modelName + `Request) (*models.` + modelName + `, error) {
+    item := &models.` + modelName + `{
+        // TODO: Map fields from req to model
+    }
+    if err := s.repo.Create(item); err != nil {
+        return nil, err
+    }
+    return item, nil
+}
+
+func (s *` + modelName + `Service) Update(id uint, req dto.Update` + modelName + `Request) (*models.` + modelName + `, error) {
+    item, err := s.repo.FindByID(id)
+    if err != nil {
+        return nil, errors.New("record not found")
+    }
+    // TODO: Update fields from req to model
+    if err := s.repo.Update(item); err != nil {
+        return nil, err
+    }
+    return item, nil
+}
+
+func (s *` + modelName + `Service) Delete(id uint) error {
+    return s.repo.Delete(id)
+}
+`
+}
+
+// generateRepositoryContent يولد محتوى Repository
+func generateRepositoryContent(appName, modelName string) string {
+	return `package repository
+
+import (
+    "gorm.io/gorm"
+
+    "github.com/nats-framework/nats/apps/` + appName + `/models"
+    "github.com/nats-framework/nats/pkg/database"
+)
+
+type ` + modelName + `Repository struct {
+    db *gorm.DB
+}
+
+func New` + modelName + `Repository() *` + modelName + `Repository {
+    return &` + modelName + `Repository{
+        db: database.DB(),
+    }
+}
+
+func (r *` + modelName + `Repository) Create(item *models.` + modelName + `) error {
+    return r.db.Create(item).Error
+}
+
+func (r *` + modelName + `Repository) FindByID(id uint) (*models.` + modelName + `, error) {
+    var item models.` + modelName + `
+    err := r.db.First(&item, id).Error
+    if err != nil {
+        return nil, err
+    }
+    return &item, nil
+}
+
+func (r *` + modelName + `Repository) FindAll() ([]models.` + modelName + `, error) {
+    var items []models.` + modelName + `
+    err := r.db.Find(&items).Error
+    return items, err
+}
+
+func (r *` + modelName + `Repository) Update(item *models.` + modelName + `) error {
+    return r.db.Save(item).Error
+}
+
+func (r *` + modelName + `Repository) Delete(id uint) error {
+    return r.db.Delete(&models.` + modelName + `{}, id).Error
+}
+
+func (r *` + modelName + `Repository) Exists(query string, args ...interface{}) (bool, error) {
+    var count int64
+    err := r.db.Model(&models.` + modelName + `{}).Where(query, args...).Count(&count).Error
+    return count > 0, err
+}
+`
+}
+
+// generatePermissionsContent يولد محتوى Permissions
+func generatePermissionsContent(appName string, models []ModelInput) string {
+	var perms []string
+	for _, model := range models {
+		if model.Name == "" {
+			continue
+		}
+		lowerName := strings.ToLower(model.Name)
+		perms = append(perms, `    Perm`+model.Name+`View   = "`+appName+`.view_`+lowerName+`"
+    Perm`+model.Name+`Create = "`+appName+`.create_`+lowerName+`"
+    Perm`+model.Name+`Edit   = "`+appName+`.edit_`+lowerName+`"
+    Perm`+model.Name+`Delete = "`+appName+`.delete_`+lowerName+`"`)
+	}
+
+	return `package permissions
+
+const (
+` + strings.Join(perms, "\n\n    ") + `
+)
+`
+}
+
+// generateListenersContent يولد محتوى Listeners
+func generateListenersContent(appName string, models []ModelInput) string {
+	var listeners []string
+	for _, model := range models {
+		if model.Name == "" {
+			continue
+		}
+		lowerName := strings.ToLower(model.Name)
+		modelNameCap := strings.Title(model.Name)
+
+		listeners = append(listeners, `
+    // مستمع عند إنشاء `+model.Name+`
+    em.Listen("`+appName+`.`+lowerName+`.created", func(event events.Event) error {
+        item, ok := event.GetData().(*models.`+modelNameCap+`)
+        if !ok {
+            return fmt.Errorf("invalid event data")
+        }
+        log.Printf("📦 `+model.Name+` created: ID=%d", item.ID)
+        return nil
+    })
+
+    // مستمع عند تحديث `+model.Name+`
+    em.Listen("`+appName+`.`+lowerName+`.updated", func(event events.Event) error {
+        item, ok := event.GetData().(*models.`+modelNameCap+`)
+        if !ok {
+            return fmt.Errorf("invalid event data")
+        }
+        log.Printf("📦 `+model.Name+` updated: ID=%d", item.ID)
+        return nil
+    })
+
+    // مستمع عند حذف `+model.Name+`
+    em.Listen("`+appName+`.`+lowerName+`.deleted", func(event events.Event) error {
+        item, ok := event.GetData().(*models.`+modelNameCap+`)
+        if !ok {
+            return fmt.Errorf("invalid event data")
+        }
+        log.Printf("📦 `+model.Name+` deleted: ID=%d", item.ID)
+        return nil
+    })`)
+	}
+
+	return `package listeners
+
+import (
+    "fmt"
+    "log"
+
+    "github.com/nats-framework/nats/apps/` + appName + `/models"
+    "github.com/nats-framework/nats/pkg/events"
+)
+
+func RegisterListeners(em *events.EventManager) {` +
+		strings.Join(listeners, "\n") + `
+}
+`
+}
+
+// generateHooksContent يولد محتوى Hooks
+func generateHooksContent(appName string, models []ModelInput) string {
+	var hooks []string
+	for _, model := range models {
+		if model.Name == "" {
+			continue
+		}
+		lowerName := strings.ToLower(model.Name)
+		modelNameCap := strings.Title(model.Name)
+
+		hooks = append(hooks, `
+    // خطاف قبل إنشاء `+model.Name+`
+    hookManager.RegisterBefore("`+appName+`.`+lowerName+`.create", func(data interface{}) (interface{}, error) {
+        item, ok := data.(*models.`+modelNameCap+`)
+        if !ok {
+            return data, nil
+        }
+        log.Printf("🔧 Before creating `+model.Name+`: %s", item.Name)
+        return data, nil
+    }, 10)
+
+    // خطاف بعد إنشاء `+model.Name+`
+    hookManager.RegisterAfter("`+appName+`.`+lowerName+`.create", func(data interface{}) (interface{}, error) {
+        item, ok := data.(*models.`+modelNameCap+`)
+        if !ok {
+            return data, nil
+        }
+        log.Printf("✅ `+model.Name+` created: %s", item.Name)
+        return data, nil
+    }, 10)`)
+	}
+
+	return `package hooks
+
+import (
+    "log"
+
+    "github.com/nats-framework/nats/apps/` + appName + `/models"
+    "github.com/nats-framework/nats/pkg/hooks"
+)
+
+func RegisterHooks(hookManager *hooks.HookManager) {` +
+		strings.Join(hooks, "\n") + `
+}
+`
+}
+
+// generateSignalsContent يولد محتوى Signals
+func generateSignalsContent(appName string, models []ModelInput) string {
+	var signals []string
+	for _, model := range models {
+		if model.Name == "" {
+			continue
+		}
+		lowerName := strings.ToLower(model.Name)
+		modelNameCap := strings.Title(model.Name)
+
+		signals = append(signals, `
+    // إشارة عند تغيير `+model.Name+`
+    signalManager.Connect("`+appName+`.`+lowerName+`.changed", func(signal *signals.Signal) error {
+        item, ok := signal.Data.(*models.`+modelNameCap+`)
+        if !ok {
+            return nil
+        }
+        log.Printf("📊 `+model.Name+` changed: ID=%d", item.ID)
+        return nil
+    })`)
+	}
+
+	return `package signals
+
+import (
+    "log"
+
+    "github.com/nats-framework/nats/apps/` + appName + `/models"
+    "github.com/nats-framework/nats/pkg/signals"
+)
+
+func RegisterSignals(signalManager *signals.SignalManager) {` +
+		strings.Join(signals, "\n") + `
+}
+`
+}
+
+// generateMiddlewareContent يولد محتوى Middleware
+func generateMiddlewareContent(appName string) string {
+	return `package middleware
+
+import (
+    "net/http"
+    "strings"
+
+    "github.com/nats-framework/nats/pkg/response"
+)
+
+// AuthMiddleware يتحقق من صلاحيات المستخدم لتطبيق ` + appName + `
+func AuthMiddleware(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        token := r.Header.Get("Authorization")
+        if token == "" {
+            response.Unauthorized(w, "Authorization required")
+            return
+        }
+
+        token = strings.TrimPrefix(token, "Bearer ")
+        if token == "" {
+            response.Unauthorized(w, "Invalid token")
+            return
+        }
+
+        // TODO: التحقق من صلاحية المستخدم لتطبيق ` + appName + `
+        next.ServeHTTP(w, r)
+    })
+}
+
+// RateLimitMiddleware يحد من معدل الطلبات
+func RateLimitMiddleware(next http.Handler) http.Handler {
+    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        // TODO: تطبيق تحديد معدل الطلبات
+        next.ServeHTTP(w, r)
+    })
+}
+`
 }

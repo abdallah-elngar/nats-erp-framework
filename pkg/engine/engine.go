@@ -10,7 +10,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/nats-framework/nats/apps/core/routes" // ✅ استيراد المسارات
+	"github.com/go-chi/chi/v5"
+
+	"github.com/nats-framework/nats/apps/core/routes"
 	"github.com/nats-framework/nats/pkg/config"
 	"github.com/nats-framework/nats/pkg/database"
 	"github.com/nats-framework/nats/pkg/logger"
@@ -102,7 +104,7 @@ func (e *Engine) InitRouter() error {
 
 	e.Router = router.NewRouter(e.Template, routerConfig)
 
-	// ✅ تسجيل المسارات - استدعاء RegisterRoutes مباشرة
+	// ✅ تسجيل المسارات - تمرير الـ Router و Template
 	routes.RegisterRoutes(e.Router, e.Template)
 
 	return nil
@@ -166,4 +168,12 @@ func (e *Engine) WaitForShutdown() {
 // GetRouter يعيد الموجه
 func (e *Engine) GetRouter() *router.Router {
 	return e.Router
+}
+
+// ✅ GetChiRouter يعيد الـ chi.Mux الأصلي (للتوافق مع الكود القديم)
+func (e *Engine) GetChiRouter() *chi.Mux {
+	if e.Router != nil {
+		return e.Router.ChiRouter()
+	}
+	return nil
 }

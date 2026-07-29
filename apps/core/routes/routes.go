@@ -15,7 +15,7 @@ func RegisterRoutes(r *router.Router, engine *template.Engine) {
 	appsCtrl := controllers.NewAppsController(engine)
 	settingsCtrl := controllers.NewSettingsController(engine)
 
-	// ✅ مسار الصحة (يجب أن يكون أولاً)
+	// ✅ مسار الصحة
 	r.Get("/health", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)

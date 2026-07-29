@@ -1,94 +1,124 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="{{ .Locale | default "ar" }}" dir="{{ .Locale | dir }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ block "title" . }}لوحة التحكم{{ end }}</title>
+    <title>{{ block "title" . }}NATS ERP{{ end }}</title>
     
-    <!-- ✅ Static Files - Local (No CDN) -->
     <link rel="stylesheet" href="{{ static "css/tailwind/tailwind.min.css" }}">
     <link rel="stylesheet" href="{{ static "css/app.css" }}">
     <link rel="stylesheet" href="{{ static "css/admin.css" }}">
     <link rel="stylesheet" href="{{ static "fonts/fontawesome/css/all.min.css" }}">
     
     <script src="{{ static "js/htmx/htmx.min.js" }}"></script>
-    <script src="{{ static "js/alpine/alpine.min.js" }}"></script>
+    <script src="{{ static "js/alpine/alpine.min.js" }}" defer></script>
     <script src="{{ static "js/app.js" }}"></script>
     
     {{ csrf_token }}
     
     <style>
-        body { font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .sidebar { min-height: 100vh; background-color: #1e293b; color: #fff; }
-        .sidebar-link { display: flex; align-items: center; gap: 12px; padding: 12px 20px; margin: 4px 12px; border-radius: 8px; color: #94a3b8; transition: all 0.3s; text-decoration: none; }
-        .sidebar-link:hover, .sidebar-link.active { background-color: #0f172a; color: #fff; }
+        [x-cloak] { display: none !important; }
+        .sidebar { min-height: 100vh; background: #1a202c; color: white; }
+        .sidebar-link { display: flex; align-items: center; gap: 12px; padding: 10px 16px; color: #a0aec0; text-decoration: none; border-radius: 8px; transition: all 0.2s; }
+        .sidebar-link:hover, .sidebar-link.active { background: #2d3748; color: white; }
         .sidebar-link i { width: 20px; text-align: center; }
-        .main-content { padding: 24px; min-height: 100vh; }
-        .navbar-custom { background-color: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
-        .stat-card { transition: transform 0.2s; }
-        .stat-card:hover { transform: translateY(-4px); }
-        .btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 8px; font-weight: 500; transition: all 0.2s; cursor: pointer; border: none; }
+        .main-content { padding: 24px; min-height: 100vh; background: #f7fafc; }
+        .navbar-custom { background: white; padding: 16px 24px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); margin-bottom: 24px; }
+        .btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 8px; font-weight: 500; transition: all 0.2s; border: none; cursor: pointer; }
         .btn-primary { background: #4f46e5; color: white; }
         .btn-primary:hover { background: #4338ca; }
         .btn-success { background: #10b981; color: white; }
         .btn-success:hover { background: #059669; }
         .btn-danger { background: #ef4444; color: white; }
         .btn-danger:hover { background: #dc2626; }
+        .btn-warning { background: #f59e0b; color: white; }
+        .btn-warning:hover { background: #d97706; }
         .btn-secondary { background: #e5e7eb; color: #374151; }
         .btn-secondary:hover { background: #d1d5db; }
         .btn-sm { padding: 4px 12px; font-size: 12px; }
-        .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+        .badge { padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
         .badge-success { background: #d1fae5; color: #065f46; }
         .badge-warning { background: #fef3c7; color: #92400e; }
         .badge-danger { background: #fee2e2; color: #991b1b; }
         .badge-primary { background: #dbeafe; color: #1e40af; }
-        .badge-info { background: #dbeafe; color: #1e40af; }
+        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
+        .card-header h2 { font-size: 18px; font-weight: 600; color: #1a202c; margin: 0; }
         .form-group { margin-bottom: 16px; }
         .form-label { display: block; font-size: 14px; font-weight: 500; color: #374151; margin-bottom: 4px; }
         .form-control { width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; transition: all 0.2s; }
         .form-control:focus { outline: none; border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
         .form-hint { font-size: 12px; color: #6b7280; margin-top: 4px; }
-        [x-cloak] { display: none !important; }
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .modal.active { display: flex; }
         .modal-content { background: white; border-radius: 12px; padding: 24px; max-width: 600px; width: 90%; max-height: 90vh; overflow-y: auto; }
+        .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb; }
+        .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: #9ca3af; float: right; }
+        .close-btn:hover { color: #4a5568; }
         .field-row { display: flex; gap: 8px; align-items: center; padding: 8px; background: #f9fafb; border-radius: 8px; margin-bottom: 8px; }
+        .developer-only { display: none; }
+        .developer-mode .developer-only { display: block; }
+        .production-mode .developer-only { display: none; }
+        .toast { position: fixed; bottom: 20px; right: 20px; padding: 12px 20px; border-radius: 8px; color: white; z-index: 2000; animation: slideIn 0.3s ease; }
+        .toast-success { background: #10b981; }
+        .toast-error { background: #ef4444; }
+        .toast-info { background: #3b82f6; }
+        .toast-warning { background: #f59e0b; color: #78350f; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 10px 12px; border-bottom: 2px solid #e5e7eb; color: #4a5568; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+        td { padding: 10px 12px; border-bottom: 1px solid #e5e7eb; }
+        tr:hover { background: #f7fafc; }
+        .migration-banner { background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 12px 16px; margin-top: 12px; display: flex; justify-content: space-between; align-items: center; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .empty-state { text-align: center; padding: 40px; color: #9ca3af; }
+        .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+        .text-muted { color: #6b7280; }
+        .text-sm { font-size: 14px; }
+        .text-xs { font-size: 12px; }
     </style>
+    
+    {{ block "styles" . }}{{ end }}
 </head>
 <body>
-
-    <div class="flex min-h-screen">
+    <!-- ✅ Alpine.js الرئيسي في الـ Layout -->
+    <div x-data="layoutApp()" x-init="initLayout()" x-cloak :class="mode === 'developer' ? 'developer-mode' : 'production-mode'">
+        
         <!-- Sidebar -->
         <aside class="sidebar w-64 flex-shrink-0 p-0">
             <div class="p-4 text-center border-b border-gray-700">
-                <h4 class="text-white font-bold m-0">
-                    <i class="fas fa-code text-indigo-400 me-2"></i>
-                    <span class="text-xl">النظام الذكي</span>
+                <h4 class="text-white font-bold m-0 flex items-center justify-center gap-2">
+                    <i class="fas fa-code text-indigo-400"></i>
+                    <span class="text-xl">NATS ERP</span>
                 </h4>
             </div>
+            
             <nav class="pt-4">
-                <a class="sidebar-link active" href="/admin/developer">
-                    <i class="fas fa-terminal"></i> لوحة المطور
-                </a>
-                <a class="sidebar-link" href="#">
-                    <i class="fas fa-server"></i> السيرفرات والخدمات
-                </a>
-                <a class="sidebar-link" href="#">
-                    <i class="fas fa-database"></i> قواعد البيانات
-                </a>
-                <a class="sidebar-link" href="#">
-                    <i class="fas fa-cog"></i> الإعدادات
-                </a>
+                {{ block "sidebar" . }}
+                    <a class="sidebar-link" href="/admin/developer" :class="currentView === 'dashboard' ? 'active' : ''">
+                        <i class="fas fa-terminal"></i> Developer
+                    </a>
+                    <a class="sidebar-link" href="/admin" :class="currentView === 'home' ? 'active' : ''">
+                        <i class="fas fa-home"></i> Dashboard
+                    </a>
+                {{ end }}
             </nav>
         </aside>
 
         <!-- Main Content -->
-        <main class="main-content flex-1 bg-gray-50">
-            <!-- Top Navbar -->
-            <nav class="navbar-custom rounded-lg p-4 mb-6 flex justify-between items-center">
-                <span class="text-gray-600">أهلاً بك 👋</span>
+        <main class="main-content flex-1">
+            
+            <!-- Navbar -->
+            <nav class="navbar-custom flex justify-between items-center">
+                <div>
+                    <span class="text-gray-600 text-sm">{{ block "page_title" . }}Dashboard{{ end }}</span>
+                </div>
                 <div class="flex items-center gap-4">
-                    <span class="badge badge-success">
-                        ✅ النظام يعمل
+                    <span class="badge badge-success" x-show="mode === 'developer'">
+                        🛠️ Developer Mode
+                    </span>
+                    <span class="badge badge-primary" x-show="mode === 'production'">
+                        🌐 Production Mode
                     </span>
                     <div class="relative" x-data="{ open: false }">
                         <button @click="open = !open" class="text-gray-600 hover:text-gray-800">
@@ -96,26 +126,113 @@
                         </button>
                         <div x-show="open" @click.away="open = false" 
                              class="absolute left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">الملف الشخصي</a>
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Settings</a>
                             <hr class="my-1">
-                            <a href="#" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">تسجيل الخروج</a>
+                            <a href="#" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100">Logout</a>
                         </div>
                     </div>
                 </div>
             </nav>
 
-            <!-- Content Block -->
-            {{ block "content" . }}
-            <div class="bg-blue-50 border border-blue-200 text-blue-700 p-4 rounded-lg">
-                لا يوجد محتوى في هذه الصفحة بعد.
+            <!-- Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div class="card">
+                    <div class="text-sm text-gray-500">📦 Apps</div>
+                    <div class="text-2xl font-bold" x-text="stats.apps || 0"></div>
+                </div>
+                <div class="card">
+                    <div class="text-sm text-gray-500">📊 Models</div>
+                    <div class="text-2xl font-bold" x-text="stats.models || 0"></div>
+                </div>
+                <div class="card">
+                    <div class="text-sm text-gray-500">👤 Users</div>
+                    <div class="text-2xl font-bold" x-text="stats.users || 0"></div>
+                </div>
+                <div class="card">
+                    <div class="text-sm text-gray-500">🔗 Relations</div>
+                    <div class="text-2xl font-bold" x-text="stats.relations || 0"></div>
+                </div>
             </div>
+
+            <!-- Content -->
+            {{ block "content" . }}
+                <div class="card">
+                    <p class="text-gray-500">Welcome to NATS Framework</p>
+                </div>
             {{ end }}
         </main>
     </div>
 
-    <!-- Scripts -->
-    <script src="{{ static "js/htmx/htmx.min.js" }}"></script>
-    <script src="{{ static "js/alpine/alpine.min.js" }}"></script>
+    <script>
+        // ✅ دالة الـ Layout الرئيسية (معرفة قبل أي حاجة)
+        function layoutApp() {
+            return {
+                mode: 'developer',
+                currentView: 'dashboard',
+                stats: { apps: 0, models: 0, users: 0, relations: 0 },
+                
+                initLayout() {
+                    // استرجاع الوضع من localStorage
+                    const savedMode = localStorage.getItem('nats_mode');
+                    if (savedMode) {
+                        this.mode = savedMode;
+                    }
+                    
+                    // تحديد الـ View من URL
+                    const path = window.location.pathname;
+                    if (path.includes('/admin/developer')) {
+                        this.currentView = 'dashboard';
+                    } else if (path.includes('/admin/apps')) {
+                        this.currentView = 'apps';
+                    } else if (path.includes('/admin/relations')) {
+                        this.currentView = 'relations';
+                    } else if (path.includes('/admin/migrations')) {
+                        this.currentView = 'migrations';
+                    } else if (path.includes('/admin/users')) {
+                        this.currentView = 'users';
+                    } else if (path.includes('/admin/settings')) {
+                        this.currentView = 'settings';
+                    }
+                    
+                    this.loadStats();
+                },
+                
+                setMode(mode) {
+                    this.mode = mode;
+                    localStorage.setItem('nats_mode', mode);
+                    this.showToast('Switched to ' + (mode === 'developer' ? 'Developer' : 'Production') + ' Mode', 'info');
+                },
+                
+                loadStats() {
+                    fetch('/api/admin/stats')
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                this.stats = data.data;
+                            }
+                        })
+                        .catch(() => {});
+                },
+                
+                showToast(message, type) {
+                    const container = document.getElementById('toast-container');
+                    if (!container) {
+                        const div = document.createElement('div');
+                        div.id = 'toast-container';
+                        div.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:2000;display:flex;flex-direction:column;gap:8px;';
+                        document.body.appendChild(div);
+                    }
+                    const toast = document.createElement('div');
+                    toast.className = 'toast toast-' + type;
+                    toast.textContent = message;
+                    document.getElementById('toast-container').appendChild(toast);
+                    setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity 0.3s'; setTimeout(() => toast.remove(), 300); }, 3000);
+                }
+            };
+        }
+    </script>
+    
     {{ block "scripts" . }}{{ end }}
 </body>
 </html>
