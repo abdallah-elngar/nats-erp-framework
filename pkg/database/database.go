@@ -160,20 +160,20 @@ func (m *Manager) Close() error {
 // ============================================
 
 // DB يعيد قاعدة البيانات الافتراضية (دالة عامة)
-func DB() *gorm.DB {
-	if defaultDB == nil {
-		// محاولة تهيئة قاعدة البيانات من الإعدادات
-		cfg, err := config.Load()
-		if err != nil {
-			return nil
-		}
-		_, err = NewManager(&cfg.Database)
-		if err != nil {
-			return nil
-		}
-	}
-	return defaultDB
-}
+// func DB() *gorm.DB {
+// 	if defaultDB == nil {
+// 		// محاولة تهيئة قاعدة البيانات من الإعدادات
+// 		cfg, err := config.Load()
+// 		if err != nil {
+// 			return nil
+// 		}
+// 		_, err = NewManager(&cfg.Database)
+// 		if err != nil {
+// 			return nil
+// 		}
+// 	}
+// 	return defaultDB
+// }
 
 // SetDB يضع قاعدة البيانات الافتراضية (للاستخدام في الاختبارات)
 func SetDB(db *gorm.DB) {
@@ -183,4 +183,10 @@ func SetDB(db *gorm.DB) {
 // GetManager يعيد مدير قاعدة البيانات الحالي
 func GetManager() *Manager {
 	return instance
+}
+func DB() *gorm.DB {
+	if instance == nil {
+		return nil
+	}
+	return instance.DB()
 }

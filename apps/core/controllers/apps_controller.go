@@ -1,7 +1,9 @@
 package controllers
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -9,7 +11,10 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/nats-framework/nats/pkg/auth"
 
+	"github.com/nats-framework/nats/pkg/database"
+	"github.com/nats-framework/nats/pkg/metadata"
 	"github.com/nats-framework/nats/pkg/response"
 	"github.com/nats-framework/nats/pkg/template"
 )
@@ -46,6 +51,14 @@ func (c *AppsController) success(w http.ResponseWriter, data interface{}) {
 
 func (c *AppsController) error(w http.ResponseWriter, status int, message string) {
 	response.Error(w, status, message)
+}
+func (c *AppsController) getUserFromContext(ctx context.Context) string {
+	// استخدام الدالة من حزمة auth (بعد التعديل)
+	user, ok := auth.GetUserFromContext(ctx)
+	if ok && user != nil {
+		return user.Username
+	}
+	return "system"
 }
 
 // ============================================
@@ -244,7 +257,7 @@ func (c *AppsController) CreateApp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// ✅ تحويل req.Models إلى ModelInput للاستخدام في الدوال
+	// ✅ تحويل req.Models إلى ModelInput
 	models := make([]ModelInput, len(req.Models))
 	for i, m := range req.Models {
 		models[i] = ModelInput{
@@ -463,7 +476,7 @@ DROP TABLE IF EXISTS ` + tableName + `;
 	}
 
 	// ============================================
-	// ✅ 7. router.go - استخدام generateRouterContent
+	// ✅ 7. router.go - ✅ استخدام models (نوع ModelInput)
 	// ============================================
 	routerContent := generateRouterContent(req.Name, models)
 	if err := os.WriteFile(filepath.Join(appPath, "routes", "router.go"), []byte(routerContent), 0644); err != nil {
@@ -721,15 +734,55 @@ func (c *AppsController) DeleteRelation(w http.ResponseWriter, r *http.Request) 
 // ============================================
 
 // AddField يضيف حقل جديد
+// ============================================
+// 5. إدارة الحقول (Add/Delete Field) - كاملة مع حفظ في قاعدة البيانات
+// ============================================
+
+// ============================================
+// دالة مساعدة للحصول على المستخدم
+// ============================================
+
+// getCurrentUser يحصل على المستخدم الحالي من السياق
+func (c *AppsController) getCurrentUser(r *http.Request) string {
+	// محاولة الحصول على المستخدم من السياق
+	user := auth.GetUserFromRequest(r)
+	if user != nil {
+		// إذا كان المستخدم من نوع User، إرجاع اسم المستخدم
+		if u, ok := user.(*auth.User); ok {
+			return u.Username
+		}
+		// إذا كان map، محاولة استخراج username
+		if u, ok := user.(map[string]interface{}); ok {
+			if username, ok := u["username"].(string); ok {
+				return username
+			}
+			if username, ok := u["Username"].(string); ok {
+				return username
+			}
+		}
+	}
+
+	// مستخدم افتراضي (للتطوير)
+	return "admin"
+}
+
+// ============================================
+// 5. إدارة الحقول (Add/Delete Field) - كاملة
+// ============================================
+
+// AddField يضيف حقل جديد لنموذج
 func (c *AppsController) AddField(w http.ResponseWriter, r *http.Request) {
 	appName := chi.URLParam(r, "app")
 	modelName := chi.URLParam(r, "model")
 
 	var req struct {
-		Name     string `json:"name"`
-		Type     string `json:"type"`
-		Required bool   `json:"required"`
-		Unique   bool   `json:"unique"`
+		Name         string `json:"name"`
+		Type         string `json:"type"`
+		Required     bool   `json:"required"`
+		Unique       bool   `json:"unique"`
+		DefaultValue string `json:"defaultValue"`
+		Relation     string `json:"relation"`
+		MaxLength    int    `json:"maxLength"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -742,11 +795,174 @@ func (c *AppsController) AddField(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// ============================================
+	// ✅ 1. التحقق من وجود التطبيق والنموذج
+	// ============================================
+	modelPath := filepath.Join("apps", appName, "models", strings.ToLower(modelName)+".go")
+	if _, err := os.Stat(modelPath); os.IsNotExist(err) {
+		c.error(w, http.StatusNotFound, "Model not found: "+modelName)
+		return
+	}
+
+	// ============================================
+	// ✅ 2. قراءة ملف النموذج الحالي
+	// ============================================
+	content, err := os.ReadFile(modelPath)
+	if err != nil {
+		c.error(w, http.StatusInternalServerError, "Failed to read model file: "+err.Error())
+		return
+	}
+
+	// ============================================
+	// ✅ 3. التحقق من عدم وجود الحقل مسبقاً
+	// ============================================
+	if strings.Contains(string(content), req.Name+" ") {
+		c.error(w, http.StatusBadRequest, "Field '"+req.Name+"' already exists in model '"+modelName+"'")
+		return
+	}
+
+	// ============================================
+	// ✅ 4. إضافة الحقل الجديد إلى الـ struct
+	// ============================================
+	goType := getGoType(req.Type)
+	fieldLine := fmt.Sprintf("    %s %s `gorm:\"column:%s\"`",
+		strings.Title(req.Name),
+		goType,
+		strings.ToLower(req.Name))
+
+	lines := strings.Split(string(content), "\n")
+	var newLines []string
+	inserted := false
+
+	for _, line := range lines {
+		newLines = append(newLines, line)
+		if !inserted && strings.Contains(line, "CreatedAt") {
+			newLines = append(newLines, fieldLine)
+			inserted = true
+		}
+	}
+
+	if !inserted {
+		for i := len(newLines) - 1; i >= 0; i-- {
+			if strings.TrimSpace(newLines[i]) == "}" {
+				newLines = append(newLines[:i], append([]string{fieldLine}, newLines[i:]...)...)
+				break
+			}
+		}
+	}
+
+	// ============================================
+	// ✅ 5. حفظ الملف المحدث
+	// ============================================
+	newContent := strings.Join(newLines, "\n")
+	if err := os.WriteFile(modelPath, []byte(newContent), 0644); err != nil {
+		c.error(w, http.StatusInternalServerError, "Failed to update model file: "+err.Error())
+		return
+	}
+
+	// ============================================
+	// ✅ 6. إنشاء هجرة GORM
+	// ============================================
+	timestamp := time.Now().Format("20060102150405")
+	tableName := strings.ToLower(modelName) + "s"
+	fieldName := strings.ToLower(req.Name)
+	modelNameCap := strings.Title(modelName)
+
+	gormContent := `package migrations
+
+import (
+    "gorm.io/gorm"
+)
+
+// Up_` + timestamp + ` يضيف عمود ` + fieldName + ` إلى جدول ` + tableName + `
+func Up_` + timestamp + `(db *gorm.DB) error {
+    return db.Migrator().AddColumn(&` + modelNameCap + `{}, "` + strings.Title(req.Name) + `")
+}
+
+// Down_` + timestamp + ` يحذف عمود ` + fieldName + ` من جدول ` + tableName + `
+func Down_` + timestamp + `(db *gorm.DB) error {
+    return db.Migrator().DropColumn(&` + modelNameCap + `{}, "` + strings.Title(req.Name) + `")
+}
+`
+
+	gormPath := filepath.Join("apps", appName, "migrations", "gorm",
+		timestamp+"_add_"+fieldName+"_to_"+strings.ToLower(modelName)+".go")
+	if err := os.WriteFile(gormPath, []byte(gormContent), 0644); err != nil {
+		c.error(w, http.StatusInternalServerError, "Failed to create GORM migration: "+err.Error())
+		return
+	}
+
+	// ============================================
+	// ✅ 7. إنشاء هجرة SQL
+	// ============================================
+	sqlType := getSQLType(req.Type)
+	constraints := ""
+	if req.Required {
+		constraints += " NOT NULL"
+	}
+	if req.Unique {
+		constraints += " UNIQUE"
+	}
+	if req.DefaultValue != "" {
+		constraints += " DEFAULT " + req.DefaultValue
+	}
+
+	sqlContent := `-- name: add_` + fieldName + `_to_` + tableName + `
+-- id: ` + timestamp + `
+-- created: ` + time.Now().Format("2006-01-02 15:04:05") + `
+
+-- up:
+ALTER TABLE ` + tableName + ` ADD COLUMN IF NOT EXISTS ` + fieldName + ` ` + sqlType + constraints + `;
+
+-- down:
+ALTER TABLE ` + tableName + ` DROP COLUMN IF EXISTS ` + fieldName + `;
+`
+
+	sqlPath := filepath.Join("apps", appName, "migrations", "sql",
+		timestamp+"_add_"+fieldName+"_to_"+strings.ToLower(modelName)+".sql")
+	if err := os.WriteFile(sqlPath, []byte(sqlContent), 0644); err != nil {
+		c.error(w, http.StatusInternalServerError, "Failed to create SQL migration: "+err.Error())
+		return
+	}
+
+	// ============================================
+	// ✅ 8. حفظ البيانات في جدول app_metadata (قاعدة البيانات)
+	// ============================================
+	// الحصول على اسم المستخدم الحالي
+	currentUser := c.getCurrentUser(r)
+
+	metadataMgr := metadata.NewMetadataManager(database.DB())
+
+	meta := &metadata.AppMetadata{
+		AppName:      appName,
+		ModelName:    modelName,
+		FieldName:    req.Name,
+		FieldType:    req.Type,
+		IsRequired:   req.Required,
+		IsUnique:     req.Unique,
+		DefaultValue: req.DefaultValue,
+		CreatedBy:    currentUser,
+		MigrationID:  timestamp,
+		Status:       "pending",
+	}
+
+	if err := metadataMgr.Save(meta); err != nil {
+		// تسجيل الخطأ ولكن لا نوقف العملية
+		fmt.Printf("⚠️ Failed to save metadata: %v\n", err)
+	}
+
+	// ============================================
+	// ✅ 9. إرجاع الاستجابة مع معلومات الهجرة
+	// ============================================
 	c.success(w, map[string]interface{}{
-		"message": "Field added successfully",
-		"app":     appName,
-		"model":   modelName,
-		"field":   req,
+		"message":        "Field added successfully. Please run migrations.",
+		"app":            appName,
+		"model":          modelName,
+		"field":          req,
+		"migration_id":   timestamp,
+		"gorm_migration": filepath.Base(gormPath),
+		"sql_migration":  filepath.Base(sqlPath),
+		"needs_migrate":  true,
 	})
 }
 
@@ -849,7 +1065,7 @@ func parseFields(fieldsStr string) []map[string]string {
 }
 
 // ============================================
-// دوال توليد المحتوى (مستخدمة)
+// دوال توليد المحتوى
 // ============================================
 
 // generateModelContent يولد محتوى ملف النموذج
@@ -1079,7 +1295,7 @@ func (c *` + modelName + `Controller) Delete(w http.ResponseWriter, r *http.Requ
 `
 }
 
-// ✅ generateRouterContent - مستخدمة في CreateApp (غير unused)
+// ✅ generateRouterContent - تستقبل []ModelInput
 func generateRouterContent(appName string, models []ModelInput) string {
 	var routes []string
 	for _, model := range models {
