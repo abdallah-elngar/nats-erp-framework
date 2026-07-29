@@ -42,6 +42,11 @@ func NewMetadataManager(db *gorm.DB) *MetadataManager {
 	return &MetadataManager{db: db}
 }
 
+// ✅ GetDB يعيد اتصال قاعدة البيانات (مُصدر)
+func (m *MetadataManager) GetDB() *gorm.DB {
+	return m.db
+}
+
 // Save يحفظ بيانات وصفية جديدة
 func (m *MetadataManager) Save(metadata *AppMetadata) error {
 	if m.db == nil {
