@@ -11,7 +11,9 @@ import (
 	"time"
 
 	"github.com/nats-framework/nats/apps/core/routes"
+	"github.com/nats-framework/nats/pkg/database"
 	"github.com/nats-framework/nats/pkg/router"
+	"github.com/nats-framework/nats/pkg/sync"
 	"github.com/nats-framework/nats/pkg/template"
 )
 
@@ -81,6 +83,29 @@ func main() {
 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("❌ Server error: %v", err)
 	}
+	// في main.go أو في أي مكان
+	db := database.DB()
+	syncManager := sync.NewSyncManager(db)
 
+	// مزامنة تطبيق معين من الملفات إلى قاعدة البيانات
+	if err := syncManager.SyncToDB("hr_management"); err != nil {
+		log.Printf("Sync error: %v", err)
+	}
+
+	// مزامنة من قاعدة البيانات إلى الملفات (استعادة التغييرات)
+	if err := syncManager.SyncFromDB("hr_management"); err != nil {
+		log.Printf("Restore error: %v", err)
+	}
+
+	// الحصول على التغييرات المعلقة
+	pending, err := syncManager.GetPendingChanges("hr_management")
+	if err == nil {
+		fmt.Printf("Pending changes: %d\n", len(pending))
+	}
+
+	// تطبيق التغييرات المعلقة
+	if err := syncManager.ApplyPendingChanges("hr_management"); err != nil {
+		log.Printf("Apply error: %v", err)
+	}
 	fmt.Println("✅ Server stopped")
 }
